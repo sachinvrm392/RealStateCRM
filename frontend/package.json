@@ -1,0 +1,33 @@
+{
+  "name": "real-estate-crm-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@hello-pangea/dnd": "^16.6.0",
+    "@mui/icons-material": "^5.15.15",
+    "@mui/material": "^5.15.15",
+    "@mui/x-data-grid": "^7.3.0",
+    "@mui/x-date-pickers": "^7.3.0",
+    "axios": "^1.6.8",
+    "dayjs": "^1.11.10",
+    "next": "14.2.3",
+    "notistack": "^3.0.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "recharts": "^2.12.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  }
+}
