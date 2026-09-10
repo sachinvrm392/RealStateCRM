@@ -266,7 +266,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                           <TableCell sx={{ textTransform: 'capitalize' }}>
                             {m.milestone_type?.replace('_', ' ')}
                           </TableCell>
-                          <TableCell fontWeight="bold">{formatCurrency(m.amount)}</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>{formatCurrency(m.amount)}</TableCell>
                           <TableCell>{dayjs(m.due_date).format('DD MMM YYYY')}</TableCell>
                           <TableCell>
                             <Chip

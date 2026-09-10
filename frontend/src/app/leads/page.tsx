@@ -145,14 +145,14 @@ export default function LeadsPage() {
       headerName: 'Assigned Agent',
       flex: 1,
       minWidth: 120,
-      valueGetter: (params) => params.row?.assigned_agent?.username || 'Unassigned',
+      renderCell: (params) => params.row?.assigned_agent?.username || 'Unassigned',
     },
     {
       field: 'created_at',
       headerName: 'Added On',
       flex: 0.9,
       minWidth: 110,
-      valueFormatter: (params) => (params.value ? dayjs(params.value).format('DD MMM YYYY') : '-'),
+      valueFormatter: (value: any) => (value ? dayjs(value).format('DD MMM YYYY') : '-'),
     },
     {
       field: 'actions',

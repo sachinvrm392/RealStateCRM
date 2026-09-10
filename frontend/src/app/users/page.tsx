@@ -107,7 +107,7 @@ export default function UsersPage() {
       headerName: 'Full Name',
       flex: 1.2,
       minWidth: 150,
-      valueGetter: (params) =>
+      renderCell: (params) =>
         `${params.row.first_name || ''} ${params.row.last_name || ''}`.trim() || params.row.username,
     },
     { field: 'email', headerName: 'Email Address', flex: 1.2, minWidth: 180 },

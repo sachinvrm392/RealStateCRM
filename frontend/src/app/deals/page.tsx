@@ -59,7 +59,7 @@ export default function DealsPage() {
       headerName: 'Booking Date',
       flex: 1,
       minWidth: 120,
-      valueFormatter: (params) => (params.value ? dayjs(params.value).format('DD MMM YYYY') : '-'),
+      valueFormatter: (value: any) => (value ? dayjs(value).format('DD MMM YYYY') : '-'),
     },
     {
       field: 'status',

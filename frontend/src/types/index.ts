@@ -123,3 +123,69 @@ export interface AuditLog {
   ip_address?: string;
   created_at: string;
 }
+
+export interface DashboardFunnel {
+  status: string;
+  count: number;
+}
+
+export interface DashboardCallback {
+  id?: number | string;
+  lead_id?: number | string;
+  name?: string;
+  full_name?: string;
+  phone?: string;
+  phone_primary?: string;
+  callback_at?: string;
+  next_callback_at?: string;
+  status?: string;
+  temperature?: string;
+}
+
+export interface DashboardSource {
+  source: string;
+  count: number;
+}
+
+export interface DashboardAgentPerformance {
+  agent_id?: number | string;
+  agent_name: string;
+  total_leads: number;
+  calls_made: number;
+  conversions: number;
+  deals_closed?: number;
+  deals?: number;
+}
+
+export interface DashboardTemperature {
+  temperature: string;
+  count: number;
+}
+
+export interface DashboardPlotSummary {
+  project?: string;
+  project__name?: string;
+  available?: number;
+  reserved?: number;
+  sold?: number;
+  status?: string;
+  count?: number;
+}
+
+export interface DashboardRevenue {
+  status?: string;
+  total_revenue?: number | string | null;
+  total_booked?: number;
+  total_confirmed?: number;
+  total_cancelled?: number;
+}
+
+export interface DashboardAging {
+  lead_id?: string | number;
+  name?: string;
+  status?: string;
+  days_in_stage?: number;
+  '>30 days'?: number;
+  '>14 days'?: number;
+  '>7 days'?: number;
+}

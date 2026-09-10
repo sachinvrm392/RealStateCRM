@@ -29,7 +29,7 @@ const NotificationBell = () => {
     setAnchorEl(null);
   };
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleMarkAsRead = async (id: string | number) => {
     try {
       await api.patch(`/api/notifications/${id}/read/`);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
