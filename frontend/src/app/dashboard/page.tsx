@@ -12,7 +12,6 @@ import TemperatureChart from '../../components/dashboard/TemperatureChart';
 import AgentPerformance from '../../components/dashboard/AgentPerformance';
 import ActivityFeed from '../../components/dashboard/ActivityFeed';
 import PlotSummary from '../../components/dashboard/PlotSummary';
-import RevenueSummary from '../../components/dashboard/RevenueSummary';
 import LeadAgingReport from '../../components/dashboard/LeadAgingReport';
 
 export default function DashboardPage() {
@@ -35,7 +34,6 @@ export default function DashboardPage() {
         activityRes,
         agentPerfRes,
         plotsRes,
-        revenueRes,
         agingRes
       ] = await Promise.all([
         api.get('/api/dashboard/funnel/').catch(() => ({ data: [] })),
@@ -45,7 +43,6 @@ export default function DashboardPage() {
         api.get('/api/dashboard/activity/').catch(() => ({ data: [] })),
         isManagerOrAdmin ? api.get('/api/dashboard/agent-performance/').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
         isManagerOrAdmin ? api.get('/api/dashboard/plots-summary/').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-        isManagerOrAdmin ? api.get('/api/dashboard/revenue/').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
         isManagerOrAdmin ? api.get('/api/dashboard/aging/').catch(() => ({ data: {} })) : Promise.resolve({ data: {} }),
       ]);
 
@@ -57,7 +54,6 @@ export default function DashboardPage() {
         activity: activityRes.data,
         agentPerformance: agentPerfRes.data,
         plotsSummary: plotsRes.data,
-        revenueSummary: revenueRes.data,
         leadAging: agingRes.data,
       });
     } catch (err: any) {
@@ -122,11 +118,8 @@ export default function DashboardPage() {
         {/* Manager/Super Admin Analytics */}
         {isManagerOrAdmin && (
           <>
-            {/* Row 3: Revenue & Plots Summary */}
-            <Grid item xs={12} md={6}>
-              <RevenueSummary data={data?.revenueSummary || []} />
-            </Grid>
-            <Grid item xs={12} md={6}>
+            {/* Row 3: Plots Inventory Summary */}
+            <Grid item xs={12}>
               <PlotSummary data={data?.plotsSummary || []} />
             </Grid>
 

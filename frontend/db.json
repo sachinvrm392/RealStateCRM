@@ -75,7 +75,7 @@
       "facing": "east",
       "price_per_sqft": 2500,
       "total_price": 3000000,
-      "status": "available",
+      "status": "sold",
       "dimensions": "30x40",
       "amenities": "Park Facing",
       "created_at": "2026-09-11T13:24:23.744Z"
@@ -175,10 +175,12 @@
       "budget_range": "",
       "plot_size_preference": "",
       "notes": "",
-      "status": "new",
+      "status": "contacted",
       "temperature": "hot",
       "assigned_agent": 4,
-      "created_at": "2026-09-11T13:28:27.046Z"
+      "created_at": "2026-09-11T13:28:27.046Z",
+      "last_contacted_at": "2026-09-11T14:11:12.401Z",
+      "next_callback_at": "2026-09-12T10:00"
     },
     {
       "id": 1,
@@ -227,12 +229,13 @@
       "interested_project": 1,
       "budget_range": "50L+",
       "plot_size_preference": "2000 sqft corner",
-      "status": "booked",
+      "status": "lost",
       "temperature": "hot",
       "assigned_agent": 3,
-      "last_contacted_at": "2026-09-09T13:24:23.744Z",
+      "last_contacted_at": "2026-09-11T15:13:26.140Z",
       "notes": "Booked plot B-201. Token cheque handed over.",
-      "created_at": "2026-09-06T13:24:23.744Z"
+      "created_at": "2026-09-06T13:24:23.744Z",
+      "updated_at": "2026-09-11T15:13:26.140Z"
     },
     {
       "id": 4,
@@ -256,14 +259,91 @@
       "interested_project": 1,
       "budget_range": "40L - 60L",
       "plot_size_preference": "1500 sqft",
-      "status": "new",
+      "status": "deal_confirmed",
       "temperature": "warm",
       "assigned_agent": 3,
       "notes": "Interested in Block A residential plot.",
-      "created_at": "2026-09-11T13:24:23.744Z"
+      "created_at": "2026-09-11T13:24:23.744Z",
+      "last_contacted_at": "2026-09-11T15:12:43.893Z",
+      "updated_at": "2026-09-11T15:12:43.893Z",
+      "next_callback_at": "2026-09-08T21:24"
     }
   ],
   "calls": [
+    {
+      "id": 10,
+      "lead": 3,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_lost",
+      "notes": "cancel deal",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T15:13:26.140Z"
+    },
+    {
+      "id": 9,
+      "lead": 5,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_deal_confirmed",
+      "notes": "deal done",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T15:12:43.893Z"
+    },
+    {
+      "id": 8,
+      "lead": 5,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_booked",
+      "notes": "final cost. now going to Booked",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T15:11:35.178Z"
+    },
+    {
+      "id": 7,
+      "lead": 5,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_negotiation",
+      "notes": "SIte visit done. now communicate with negotition of amount",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T15:11:03.377Z"
+    },
+    {
+      "id": 6,
+      "lead": 5,
+      "agent": 3,
+      "agent_name": "agent_rahul",
+      "outcome": "callback_scheduled",
+      "notes": "8 sep site visit",
+      "callback_scheduled_at": "2026-09-08T21:24",
+      "created_at": "2026-09-11T14:54:06.080Z"
+    },
+    {
+      "id": 5,
+      "lead": 5,
+      "agent": 3,
+      "agent_name": "agent_rahul",
+      "outcome": "connected",
+      "notes": "TAke basic information for project",
+      "callback_scheduled_at": null,
+      "created_at": "2026-09-11T14:52:20.603Z"
+    },
+    {
+      "id": 4,
+      "lead": 6,
+      "agent": 3,
+      "agent_name": "agent_rahul",
+      "outcome": "callback_scheduled",
+      "notes": "",
+      "callback_scheduled_at": "2026-09-12T10:00",
+      "created_at": "2026-09-11T14:11:12.401Z"
+    },
     {
       "id": 1,
       "lead": 1,
@@ -294,6 +374,19 @@
     }
   ],
   "deals": [
+    {
+      "id": 2,
+      "lead": 5,
+      "plot": 1,
+      "booking_date": "2026-09-11",
+      "deal_amount": 3000000,
+      "discount": 0,
+      "final_amount": 3000000,
+      "status": "confirmed",
+      "notes": "Converted from Lead Sushil Kumar",
+      "created_by": 2,
+      "created_at": "2026-09-11T15:11:35.178Z"
+    },
     {
       "id": 1,
       "lead": 3,
@@ -339,9 +432,105 @@
       "is_paid": false,
       "notes": "Remaining balance due at sub-registrar plot registry.",
       "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 4,
+      "deal": 2,
+      "milestone_type": "token",
+      "amount": 300000,
+      "due_date": "2026-09-11",
+      "paid_date": "2026-09-11",
+      "is_paid": true,
+      "notes": "Initial Booking Token",
+      "created_at": "2026-09-11T15:11:35.178Z"
+    },
+    {
+      "id": 5,
+      "deal": 2,
+      "milestone_type": "down_payment",
+      "amount": 750000,
+      "due_date": "2026-09-26",
+      "paid_date": null,
+      "is_paid": false,
+      "notes": "Agreement Down Payment (25%)",
+      "created_at": "2026-09-11T15:11:35.178Z"
+    },
+    {
+      "id": 6,
+      "deal": 2,
+      "milestone_type": "full_payment",
+      "amount": 1950000,
+      "due_date": "2026-10-26",
+      "paid_date": null,
+      "is_paid": false,
+      "notes": "Registry Balance Clearance",
+      "created_at": "2026-09-11T15:11:35.178Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": 16,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "3",
+      "description": "Lead status changed to lost by Sales Manager. Notes: cancel deal",
+      "created_at": "2026-09-11T15:13:26.140Z"
+    },
+    {
+      "id": 15,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "5",
+      "description": "Lead status changed to deal_confirmed by Sales Manager. Notes: deal done",
+      "created_at": "2026-09-11T15:12:43.893Z"
+    },
+    {
+      "id": 14,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "5",
+      "description": "Lead status changed to booked by Sales Manager. Notes: final cost. now going to Booked",
+      "created_at": "2026-09-11T15:11:35.178Z"
+    },
+    {
+      "id": 13,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "5",
+      "description": "Lead status changed to negotiation by Sales Manager. Notes: SIte visit done. now communicate with negotition of amount",
+      "created_at": "2026-09-11T15:11:03.377Z"
+    },
+    {
+      "id": 12,
+      "user": 1,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "5",
+      "description": "Lead status changed to site_visit_done",
+      "created_at": "2026-09-11T14:55:09.760Z"
+    },
+    {
+      "id": 11,
+      "user": 1,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "5",
+      "description": "Lead status changed to site_visit_scheduled",
+      "created_at": "2026-09-11T14:53:13.997Z"
+    },
+    {
+      "id": 10,
+      "user": 1,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "5",
+      "description": "Lead status changed to interested",
+      "created_at": "2026-09-11T14:53:08.974Z"
+    },
     {
       "id": 9,
       "user": 1,
