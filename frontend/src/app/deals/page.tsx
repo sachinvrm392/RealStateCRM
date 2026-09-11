@@ -1,8 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Stack, Chip } from '@mui/material';
+import { Box, Typography, Stack, Chip } from '@mui/material';
 import { GridColDef } from '@mui/x-data-grid';
-import AddIcon from '@mui/icons-material/Add';
 import DataTable from '../../components/common/DataTable';
 import StatusBadge from '../../components/common/StatusBadge';
 import { Deal } from '../../types';
@@ -89,24 +88,14 @@ export default function DealsPage() {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold">
-            Deals & Plot Allocations
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage booked, confirmed, and finalized plot reservations
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => router.push('/deals/new')}
-        >
-          Create New Deal
-        </Button>
-      </Stack>
+      <Box mb={3}>
+        <Typography variant="h4" fontWeight="bold">
+          Deals & Plot Allocations
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Manage booked, confirmed, and finalized plot reservations
+        </Typography>
+      </Box>
 
       <DataTable
         columns={columns}
