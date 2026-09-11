@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '../../../../../lib/db';
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
+  db.sync();
   const leadId = Number(params.id);
   const lead = db.leads.find((l) => l.id === leadId);
 
@@ -25,6 +26,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       description: `Reassigned Lead ${lead.full_name} to ${agent ? agent.username : agentId}`,
       created_at: new Date().toISOString(),
     });
+
+    db.saveToFile();
 
     return NextResponse.json({
       ...lead,

@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { db } from '../../../../../lib/db';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+  db.sync();
   const leadId = Number(params.id);
   const calls = db.calls.filter((c) => c.lead === leadId);
   return NextResponse.json(calls);
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
+  db.sync();
   const leadId = Number(params.id);
   const lead = db.leads.find((l) => l.id === leadId);
 
@@ -42,6 +44,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (lead.status === 'new') {
       lead.status = 'contacted';
     }
+
+    db.saveToFile();
 
     return NextResponse.json(newCall, { status: 201 });
   } catch (err) {

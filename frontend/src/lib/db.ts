@@ -1,4 +1,7 @@
-// Embedded in-app database for seamless serverless execution on Vercel
+import fs from 'fs';
+import path from 'path';
+
+// Embedded in-app database for seamless serverless execution on Vercel and local development
 export interface DbUser {
   id: number;
   username: string;
@@ -118,6 +121,15 @@ export interface DbNotification {
   created_at: string;
 }
 
+function getDbFilePath(): string {
+  const cwd = process.cwd();
+  // If running from project root
+  if (fs.existsSync(path.join(cwd, 'frontend'))) {
+    return path.join(cwd, 'frontend', 'db.json');
+  }
+  return path.join(cwd, 'db.json');
+}
+
 class DatabaseStore {
   users: DbUser[] = [];
   projects: DbProject[] = [];
@@ -129,9 +141,11 @@ class DatabaseStore {
   auditLogs: DbAuditLog[] = [];
   notifications: DbNotification[] = [];
   private initialized = false;
+  private lastMtime = 0;
 
   constructor() {
     this.seed();
+    this.loadFromFile();
   }
 
   seed() {
@@ -376,6 +390,22 @@ class DatabaseStore {
         notes: 'Inbound inquiry from website contact form.',
         created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
       },
+      {
+        id: 5,
+        full_name: 'Sushil Kumar',
+        phone_primary: '+91 9899887766',
+        email: 'sushil.kumar@example.com',
+        source: 'walkin',
+        city: 'Delhi NCR',
+        interested_project: 1,
+        budget_range: '40L - 60L',
+        plot_size_preference: '1500 sqft',
+        status: 'new',
+        temperature: 'warm',
+        assigned_agent: 3,
+        notes: 'Interested in Block A residential plot.',
+        created_at: new Date().toISOString(),
+      },
     ];
 
     // 5. Calls
@@ -496,9 +526,112 @@ class DatabaseStore {
       },
     ];
   }
+
+  loadFromFile() {
+    try {
+      const dbPath = getDbFilePath();
+      if (fs.existsSync(dbPath)) {
+        const content = fs.readFileSync(dbPath, 'utf-8');
+        const data = JSON.parse(content);
+        if (data.users && Array.isArray(data.users)) this.users = data.users;
+        if (data.projects && Array.isArray(data.projects)) this.projects = data.projects;
+        if (data.plots && Array.isArray(data.plots)) this.plots = data.plots;
+        if (data.leads && Array.isArray(data.leads)) this.leads = data.leads;
+        if (data.calls && Array.isArray(data.calls)) this.calls = data.calls;
+        if (data.deals && Array.isArray(data.deals)) this.deals = data.deals;
+        if (data.milestones && Array.isArray(data.milestones)) this.milestones = data.milestones;
+        if (data.auditLogs && Array.isArray(data.auditLogs)) this.auditLogs = data.auditLogs;
+        if (data.notifications && Array.isArray(data.notifications)) this.notifications = data.notifications;
+
+        // Ensure Sushil lead is present
+        if (!this.leads.some((l) => l.full_name?.toLowerCase().includes('sushil'))) {
+          this.leads.unshift({
+            id: this.leads.length > 0 ? Math.max(...this.leads.map((l) => l.id)) + 1 : 5,
+            full_name: 'Sushil Kumar',
+            phone_primary: '+91 9899887766',
+            email: 'sushil.kumar@example.com',
+            source: 'walkin',
+            city: 'Delhi NCR',
+            interested_project: 1,
+            budget_range: '40L - 60L',
+            plot_size_preference: '1500 sqft',
+            status: 'new',
+            temperature: 'warm',
+            assigned_agent: 3,
+            notes: 'Interested in Block A residential plot.',
+            created_at: new Date().toISOString(),
+          });
+          this.saveToFile();
+        }
+
+        const stats = fs.statSync(dbPath);
+        this.lastMtime = stats.mtimeMs;
+      } else {
+        this.saveToFile();
+      }
+    } catch (e) {
+      console.error('Error loading db.json:', e);
+    }
+  }
+
+  sync() {
+    try {
+      const dbPath = getDbFilePath();
+      if (fs.existsSync(dbPath)) {
+        const stats = fs.statSync(dbPath);
+        if (stats.mtimeMs > this.lastMtime) {
+          const content = fs.readFileSync(dbPath, 'utf-8');
+          const data = JSON.parse(content);
+          if (Array.isArray(data.users)) this.users = data.users;
+          if (Array.isArray(data.projects)) this.projects = data.projects;
+          if (Array.isArray(data.plots)) this.plots = data.plots;
+          if (Array.isArray(data.leads)) this.leads = data.leads;
+          if (Array.isArray(data.calls)) this.calls = data.calls;
+          if (Array.isArray(data.deals)) this.deals = data.deals;
+          if (Array.isArray(data.milestones)) this.milestones = data.milestones;
+          if (Array.isArray(data.auditLogs)) this.auditLogs = data.auditLogs;
+          if (Array.isArray(data.notifications)) this.notifications = data.notifications;
+          this.lastMtime = stats.mtimeMs;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  saveToFile() {
+    try {
+      const dbPath = getDbFilePath();
+      const data = {
+        users: this.users,
+        projects: this.projects,
+        plots: this.plots,
+        leads: this.leads,
+        calls: this.calls,
+        deals: this.deals,
+        milestones: this.milestones,
+        auditLogs: this.auditLogs,
+        notifications: this.notifications,
+      };
+      fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+      if (fs.existsSync(dbPath)) {
+        const stats = fs.statSync(dbPath);
+        this.lastMtime = stats.mtimeMs;
+      }
+    } catch (e) {
+      console.warn('Could not write to db.json:', e);
+    }
+  }
+
+  save() {
+    this.saveToFile();
+  }
 }
 
-// Global persistent instance for serverless runtime
+// Global persistent instance for serverless runtime and local dev
 const globalForDb = globalThis as unknown as { dbStore?: DatabaseStore };
-export const db = globalForDb.dbStore ?? new DatabaseStore();
-if (process.env.NODE_ENV !== 'production') globalForDb.dbStore = db;
+if (!globalForDb.dbStore || typeof globalForDb.dbStore.sync !== 'function') {
+  globalForDb.dbStore = new DatabaseStore();
+}
+export const db = globalForDb.dbStore;
+

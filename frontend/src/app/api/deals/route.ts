@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '../../../lib/db';
 
 export async function GET(req: Request) {
+  db.sync();
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
 
@@ -10,6 +11,7 @@ export async function GET(req: Request) {
     (l) => l.status === 'booked' || l.status === 'deal_confirmed'
   );
 
+  let updated = false;
   for (const lead of convertedLeads) {
     const existingDeal = db.deals.find((d) => d.lead === lead.id);
     const isConfirmed = lead.status === 'deal_confirmed';
@@ -41,6 +43,7 @@ export async function GET(req: Request) {
       };
 
       db.deals.unshift(autoDeal);
+      updated = true;
 
       if (plot) {
         plot.status = isConfirmed ? 'sold' : 'reserved';
@@ -107,8 +110,13 @@ export async function GET(req: Request) {
         existingDeal.status = 'confirmed';
         const plot = db.plots.find((p) => p.id === existingDeal.plot);
         if (plot) plot.status = 'sold';
+        updated = true;
       }
     }
+  }
+
+  if (updated) {
+    db.saveToFile();
   }
 
   let results = [...db.deals];
@@ -131,6 +139,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    db.sync();
     const body = await req.json();
     const leadId = Number(body.lead);
     const plotId = Number(body.plot);
@@ -238,6 +247,8 @@ export async function POST(req: Request) {
       description: `Booked Deal #${savedDeal.id} for Plot ${plot ? plot.plot_number : plotId} (${lead ? lead.full_name : leadId})`,
       created_at: new Date().toISOString(),
     });
+
+    db.saveToFile();
 
     return NextResponse.json(
       {

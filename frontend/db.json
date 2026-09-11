@@ -1,0 +1,384 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "admin123",
+      "email": "admin@crm.local",
+      "first_name": "Super",
+      "last_name": "Admin",
+      "role": "super_admin",
+      "phone": "+91 9800000001",
+      "is_active": true
+    },
+    {
+      "id": 2,
+      "username": "manager",
+      "password": "manager123",
+      "email": "manager@crm.local",
+      "first_name": "Sales",
+      "last_name": "Manager",
+      "role": "manager",
+      "phone": "+91 9800011122",
+      "is_active": true
+    },
+    {
+      "id": 3,
+      "username": "agent_rahul",
+      "password": "agent123",
+      "email": "rahul@crm.local",
+      "first_name": "Rahul",
+      "last_name": "Sharma",
+      "role": "agent",
+      "phone": "+91 9811122233",
+      "is_active": true
+    },
+    {
+      "id": 4,
+      "username": "agent_priya",
+      "password": "agent123",
+      "email": "priya@crm.local",
+      "first_name": "Priya",
+      "last_name": "Patel",
+      "role": "agent",
+      "phone": "+91 9822233344",
+      "is_active": true
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "name": "Green Valley Enclave",
+      "location": "Airport Expressway, Sector 45",
+      "description": "Premium 50-acre gated plotted township with clubhouse, 40ft wide internal roads, and landscaped parks.",
+      "is_active": true,
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 2,
+      "name": "Palm Meadows Residency",
+      "location": "Outer Ring Road, North Zone",
+      "description": "Eco-friendly luxury villa plots with dedicated jogging track, 24/7 security, and solar lighting.",
+      "is_active": true,
+      "created_at": "2026-09-11T13:24:23.744Z"
+    }
+  ],
+  "plots": [
+    {
+      "id": 1,
+      "project": 1,
+      "project_name": "Green Valley Enclave",
+      "plot_number": "A-101",
+      "block_sector": "Block A",
+      "area_sqft": 1200,
+      "plot_type": "residential",
+      "facing": "east",
+      "price_per_sqft": 2500,
+      "total_price": 3000000,
+      "status": "available",
+      "dimensions": "30x40",
+      "amenities": "Park Facing",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 2,
+      "project": 1,
+      "project_name": "Green Valley Enclave",
+      "plot_number": "A-102",
+      "block_sector": "Block A",
+      "area_sqft": 1500,
+      "plot_type": "residential",
+      "facing": "north",
+      "price_per_sqft": 2500,
+      "total_price": 3750000,
+      "status": "available",
+      "dimensions": "30x50",
+      "amenities": "Wide Road",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 3,
+      "project": 1,
+      "project_name": "Green Valley Enclave",
+      "plot_number": "B-201",
+      "block_sector": "Block B",
+      "area_sqft": 2000,
+      "plot_type": "residential",
+      "facing": "corner",
+      "price_per_sqft": 2800,
+      "total_price": 5600000,
+      "status": "reserved",
+      "dimensions": "40x50",
+      "amenities": "Two Side Open Corner",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 4,
+      "project": 1,
+      "project_name": "Green Valley Enclave",
+      "plot_number": "C-01",
+      "block_sector": "Commercial Strip",
+      "area_sqft": 800,
+      "plot_type": "commercial",
+      "facing": "north",
+      "price_per_sqft": 4500,
+      "total_price": 3600000,
+      "status": "available",
+      "dimensions": "20x40",
+      "amenities": "Main Road Facing",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 5,
+      "project": 2,
+      "project_name": "Palm Meadows Residency",
+      "plot_number": "P-12",
+      "block_sector": "Phase 1",
+      "area_sqft": 1800,
+      "plot_type": "residential",
+      "facing": "east",
+      "price_per_sqft": 3200,
+      "total_price": 5760000,
+      "status": "sold",
+      "dimensions": "30x60",
+      "amenities": "Clubhouse Facing",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 6,
+      "project": 2,
+      "project_name": "Palm Meadows Residency",
+      "plot_number": "P-14",
+      "block_sector": "Phase 1",
+      "area_sqft": 2400,
+      "plot_type": "residential",
+      "facing": "west",
+      "price_per_sqft": 3100,
+      "total_price": 7440000,
+      "status": "available",
+      "dimensions": "40x60",
+      "amenities": "Corner Plot",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    }
+  ],
+  "leads": [
+    {
+      "id": 6,
+      "full_name": "Test Lead Dynamic",
+      "phone_primary": "+91 9999111122",
+      "phone_alternate": "",
+      "email": "",
+      "whatsapp_number": "",
+      "source": "walkin",
+      "city": "",
+      "interested_project": null,
+      "budget_range": "",
+      "plot_size_preference": "",
+      "notes": "",
+      "status": "new",
+      "temperature": "hot",
+      "assigned_agent": 4,
+      "created_at": "2026-09-11T13:28:27.046Z"
+    },
+    {
+      "id": 1,
+      "full_name": "Amit Verma",
+      "phone_primary": "+91 9876543210",
+      "email": "amit.verma@example.com",
+      "source": "facebook",
+      "city": "Delhi NCR",
+      "interested_project": 1,
+      "budget_range": "30L - 40L",
+      "plot_size_preference": "1200 sqft",
+      "status": "interested",
+      "temperature": "hot",
+      "assigned_agent": 3,
+      "last_contacted_at": "2026-09-11T10:24:23.744Z",
+      "next_callback_at": "2026-09-11T15:24:23.744Z",
+      "notes": "Looking for immediate registry, requested layout PDF on WhatsApp.",
+      "created_at": "2026-09-09T13:24:23.744Z"
+    },
+    {
+      "id": 2,
+      "full_name": "Sunita Deshmukh",
+      "phone_primary": "+91 9812345678",
+      "whatsapp_number": "+91 9812345678",
+      "email": "sunita.desh@example.com",
+      "source": "whatsapp",
+      "city": "Pune",
+      "interested_project": 2,
+      "budget_range": "50L - 75L",
+      "plot_size_preference": "1800 - 2400 sqft",
+      "status": "site_visit_scheduled",
+      "temperature": "hot",
+      "assigned_agent": 4,
+      "last_contacted_at": "2026-09-10T13:24:23.744Z",
+      "next_callback_at": "2026-09-12T13:24:23.744Z",
+      "notes": "Site visit scheduled this Saturday 11 AM with family.",
+      "created_at": "2026-09-08T13:24:23.744Z"
+    },
+    {
+      "id": 3,
+      "full_name": "Rajesh Gupta",
+      "phone_primary": "+91 9777665544",
+      "email": "rajesh.gupta@example.com",
+      "source": "referral",
+      "city": "Bangalore",
+      "interested_project": 1,
+      "budget_range": "50L+",
+      "plot_size_preference": "2000 sqft corner",
+      "status": "booked",
+      "temperature": "hot",
+      "assigned_agent": 3,
+      "last_contacted_at": "2026-09-09T13:24:23.744Z",
+      "notes": "Booked plot B-201. Token cheque handed over.",
+      "created_at": "2026-09-06T13:24:23.744Z"
+    },
+    {
+      "id": 4,
+      "full_name": "Vikas Khanna",
+      "phone_primary": "+91 9666554433",
+      "source": "website",
+      "city": "Mumbai",
+      "status": "new",
+      "temperature": "unqualified",
+      "assigned_agent": 4,
+      "notes": "Inbound inquiry from website contact form.",
+      "created_at": "2026-09-10T13:24:23.744Z"
+    },
+    {
+      "id": 5,
+      "full_name": "Sushil Kumar",
+      "phone_primary": "+91 9899887766",
+      "email": "sushil.kumar@example.com",
+      "source": "walkin",
+      "city": "Delhi NCR",
+      "interested_project": 1,
+      "budget_range": "40L - 60L",
+      "plot_size_preference": "1500 sqft",
+      "status": "new",
+      "temperature": "warm",
+      "assigned_agent": 3,
+      "notes": "Interested in Block A residential plot.",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    }
+  ],
+  "calls": [
+    {
+      "id": 1,
+      "lead": 1,
+      "agent": 3,
+      "agent_name": "agent_rahul",
+      "outcome": "connected",
+      "notes": "Explained payment plan and project location. Customer is highly interested in Block A.",
+      "created_at": "2026-09-11T08:24:23.744Z"
+    },
+    {
+      "id": 2,
+      "lead": 1,
+      "agent": 3,
+      "agent_name": "agent_rahul",
+      "outcome": "callback_scheduled",
+      "notes": "Customer requested a callback at 4 PM after consulting his spouse.",
+      "callback_scheduled_at": "2026-09-11T15:24:23.744Z",
+      "created_at": "2026-09-11T10:24:23.744Z"
+    },
+    {
+      "id": 3,
+      "lead": 2,
+      "agent": 4,
+      "agent_name": "agent_priya",
+      "outcome": "connected",
+      "notes": "Confirmed site visit appointment for Saturday morning.",
+      "created_at": "2026-09-10T13:24:23.744Z"
+    }
+  ],
+  "deals": [
+    {
+      "id": 1,
+      "lead": 3,
+      "plot": 3,
+      "booking_date": "2026-09-09",
+      "deal_amount": 5600000,
+      "discount": 100000,
+      "final_amount": 5500000,
+      "status": "booked",
+      "notes": "Agreed Rs. 1 Lakh discount for full registry within 45 days.",
+      "created_by": 2,
+      "created_at": "2026-09-09T13:24:23.744Z"
+    }
+  ],
+  "milestones": [
+    {
+      "id": 1,
+      "deal": 1,
+      "milestone_type": "token",
+      "amount": 100000,
+      "due_date": "2026-09-09",
+      "paid_date": "2026-09-09",
+      "is_paid": true,
+      "notes": "Token amount paid via IMPS ref #8291039",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 2,
+      "deal": 1,
+      "milestone_type": "down_payment",
+      "amount": 1400000,
+      "due_date": "2026-09-26",
+      "is_paid": false,
+      "notes": "25% agreement value due at sale agreement signing.",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 3,
+      "deal": 1,
+      "milestone_type": "full_payment",
+      "amount": 4000000,
+      "due_date": "2026-10-26",
+      "is_paid": false,
+      "notes": "Remaining balance due at sub-registrar plot registry.",
+      "created_at": "2026-09-11T13:24:23.744Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": 3,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Lead",
+      "entity_id": "6",
+      "description": "Created Lead Test Lead Dynamic",
+      "created_at": "2026-09-11T13:28:27.046Z"
+    },
+    {
+      "id": 1,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Project",
+      "entity_id": "1",
+      "description": "Created Project Green Valley Enclave",
+      "created_at": "2026-09-07T13:24:23.744Z"
+    },
+    {
+      "id": 2,
+      "user": 2,
+      "action": "create",
+      "entity_type": "Deal",
+      "entity_id": "1",
+      "description": "Booked Plot B-201 for Rajesh Gupta",
+      "created_at": "2026-09-09T13:24:23.744Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "recipient": 3,
+      "notification_type": "callback_reminder",
+      "title": "Callback Reminder",
+      "message": "Scheduled callback with Amit Verma (+91 9876543210)",
+      "is_read": false,
+      "created_at": "2026-09-11T12:24:23.744Z"
+    }
+  ]
+}

@@ -195,6 +195,23 @@ class Command(BaseCommand):
             }
         )
 
+        lead_5, _ = Lead.objects.get_or_create(
+            phone_primary='+91 9899887766',
+            defaults={
+                'full_name': 'Sushil Kumar',
+                'email': 'sushil.kumar@example.com',
+                'source': 'walkin',
+                'city': 'Delhi NCR',
+                'interested_project': proj_1,
+                'budget_range': '40L - 60L',
+                'plot_size_preference': '1500 sqft',
+                'status': 'new',
+                'temperature': 'warm',
+                'assigned_agent': agent_1,
+                'notes': 'Interested in Block A residential plot.',
+            }
+        )
+
         self.stdout.write(self.style.SUCCESS('  [OK] Created leads across pipeline stages'))
 
         # 5. Call Attempts

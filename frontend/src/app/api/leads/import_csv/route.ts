@@ -1,8 +1,9 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '../../../../lib/db';
 
 export async function POST(req: Request) {
   try {
+    db.sync();
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
@@ -82,6 +83,10 @@ export async function POST(req: Request) {
 
       db.leads.unshift(newLead);
       created_count++;
+    }
+
+    if (created_count > 0) {
+      db.saveToFile();
     }
 
     return NextResponse.json({

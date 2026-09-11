@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '../../../../lib/db';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+  db.sync();
   const leadId = Number(params.id);
   const lead = db.leads.find((l) => l.id === leadId);
 
@@ -24,6 +25,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  db.sync();
   const leadId = Number(params.id);
   const lead = db.leads.find((l) => l.id === leadId);
 
@@ -149,6 +151,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     lead.updated_at = new Date().toISOString();
+
+    db.saveToFile();
 
     const agent = db.users.find((u) => u.id === lead.assigned_agent);
     const proj = db.projects.find((p) => p.id === lead.interested_project);
