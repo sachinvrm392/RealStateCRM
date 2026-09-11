@@ -240,17 +240,12 @@ export default function AgentsPage() {
         const name = `${params.row.first_name || ''} ${params.row.last_name || ''}`.trim() || params.row.username;
         return (
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
+            <Avatar sx={{ width: 30, height: 30, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
               {name.charAt(0).toUpperCase()}
             </Avatar>
-            <Box>
-              <Typography variant="body2" fontWeight={600} color="text.primary">
-                {name}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                @{params.row.username}
-              </Typography>
-            </Box>
+            <Typography variant="body2" fontWeight={600} color="text.primary" noWrap>
+              {name}
+            </Typography>
           </Stack>
         );
       },
