@@ -29,3 +29,28 @@ def agents_list(request):
     agents = User.objects.filter(is_active=True, role='agent')
     serializer = UserProfileSerializer(agents, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    user = request.user
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    confirm_password = request.data.get('confirm_password')
+
+    if not current_password or not new_password or not confirm_password:
+        return Response({'detail': 'Please provide current password, new password, and confirmation.'}, status=400)
+
+    if not user.check_password(current_password):
+        return Response({'detail': 'Current password does not match.'}, status=400)
+
+    if len(new_password) < 6:
+        return Response({'detail': 'New password must be at least 6 characters long.'}, status=400)
+
+    if new_password != confirm_password:
+        return Response({'detail': 'New password and confirmation do not match.'}, status=400)
+
+    user.set_password(new_password)
+    user.save()
+    return Response({'detail': 'Password changed successfully.'})
+
