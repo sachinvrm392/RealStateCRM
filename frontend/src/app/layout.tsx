@@ -30,16 +30,17 @@ const LayoutContent = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar />
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', ml: '240px' }}>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: `calc(100% - 240px)` }}>
         <Header />
-        <Box component="main" sx={{ p: 3, flexGrow: 1, mt: '64px' }}>
+        <Box component="main" sx={{ p: { xs: 2, sm: 3 }, flexGrow: 1, mt: '64px' }}>
           {children}
         </Box>
       </Box>
     </Box>
   );
+
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
