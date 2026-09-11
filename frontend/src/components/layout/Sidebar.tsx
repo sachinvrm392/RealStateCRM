@@ -10,6 +10,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import HistoryIcon from '@mui/icons-material/History';
 import LockResetIcon from '@mui/icons-material/LockReset';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { ROLES } from '../../lib/constants';
@@ -29,6 +30,7 @@ const Sidebar = () => {
     { text: 'Projects', icon: <BusinessIcon />, path: '/projects', roles: ['super_admin', 'manager'] },
     { text: 'Plots', icon: <MapIcon />, path: '/plots', roles: ['super_admin', 'manager'] },
     { text: 'Deals', icon: <AttachMoneyIcon />, path: '/deals', roles: ['super_admin', 'manager'] },
+    { text: 'Agents', icon: <SupportAgentIcon />, path: '/agents', roles: ['super_admin', 'manager'] },
     { text: 'Reports', icon: <AssessmentIcon />, path: '/reports', roles: ['super_admin', 'manager'] },
     { text: 'Change Password', icon: <LockResetIcon />, path: '/change-password', roles: ['super_admin', 'manager', 'agent'] },
     { text: 'Users', icon: <SupervisorAccountIcon />, path: '/users', roles: ['super_admin'] },
