@@ -35,6 +35,7 @@ import { useAuth } from '../../hooks/useAuth';
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   // Add / Edit Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -70,6 +71,16 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  const filteredProjects = projects.filter((proj) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      proj.name?.toLowerCase().includes(q) ||
+      proj.location?.toLowerCase().includes(q) ||
+      proj.description?.toLowerCase().includes(q)
+    );
+  });
 
   const handleOpenAdd = () => {
     setEditingProject(null);
@@ -142,18 +153,63 @@ export default function ProjectsPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 80 },
-    { field: 'name', headerName: 'Project / Society Name', flex: 1.2, minWidth: 180 },
-    { field: 'location', headerName: 'Location / City', flex: 1, minWidth: 150 },
-    { field: 'description', headerName: 'Description & Master Plan', flex: 2, minWidth: 250 },
+    {
+      field: 'id',
+      headerName: 'ID',
+      width: 70,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params) => (
+        <Typography variant="body2" color="text.secondary">
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: 'name',
+      headerName: 'Project / Society Name',
+      flex: 1.3,
+      minWidth: 180,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={600} color="primary.main">
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: 'location',
+      headerName: 'Location / City',
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params) => (
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <LocationOnIcon fontSize="small" sx={{ color: 'text.secondary', fontSize: 16 }} />
+          <Typography variant="body2">{params.value || 'N/A'}</Typography>
+        </Stack>
+      ),
+    },
+    {
+      field: 'description',
+      headerName: 'Description & Master Plan',
+      flex: 2,
+      minWidth: 240,
+      renderCell: (params) => (
+        <Typography variant="body2" color="text.secondary" noWrap>
+          {params.value || 'No details provided'}
+        </Typography>
+      ),
+    },
     {
       field: 'actions',
       headerName: 'Actions',
       sortable: false,
       filterable: false,
+      width: isManagerOrAdmin ? 150 : 80,
       minWidth: isManagerOrAdmin ? 150 : 80,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
           <Tooltip title="View Project Details">
             <IconButton
               size="small"
@@ -194,7 +250,13 @@ export default function ProjectsPage() {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        spacing={2}
+        mb={3}
+      >
         <Box>
           <Typography variant="h4" fontWeight="bold">
             Real Estate Projects & Societies
@@ -215,12 +277,45 @@ export default function ProjectsPage() {
         )}
       </Stack>
 
+      {/* Search Bar */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+          <TextField
+            fullWidth
+            size="small"
+            label="Search Project Name, Location, or Keywords"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => setSearch('')}
+              sx={{ minWidth: 90 }}
+            >
+              Clear
+            </Button>
+          )}
+        </Stack>
+      </Paper>
+
       <DataTable
         columns={columns}
-        rows={projects}
+        rows={filteredProjects}
         loading={loading}
         onRowClick={(params) => handleOpenView(params.row)}
       />
+
 
       {/* Add / Edit Project Modal */}
       <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="sm" fullWidth>

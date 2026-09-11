@@ -230,13 +230,33 @@ export default function LeadsPage() {
   });
 
   const columns: GridColDef[] = [
-    { field: 'full_name', headerName: 'Full Name', flex: 1.2, minWidth: 150 },
-    { field: 'phone_primary', headerName: 'Primary Phone', flex: 1, minWidth: 120 },
+    {
+      field: 'full_name',
+      headerName: 'Lead Name',
+      flex: 1.2,
+      minWidth: 160,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={600} color="primary.main">
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: 'phone_primary',
+      headerName: 'Primary Phone',
+      flex: 1,
+      minWidth: 130,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={500}>
+          {params.value || '-'}
+        </Typography>
+      ),
+    },
     {
       field: 'source',
       headerName: 'Source',
       flex: 0.8,
-      minWidth: 100,
+      minWidth: 110,
       renderCell: (params) => (
         <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
           {params.value}
@@ -245,7 +265,7 @@ export default function LeadsPage() {
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: 'Stage Status',
       flex: 1,
       minWidth: 140,
       renderCell: (params) => <StatusBadge status={params.value} type="lead" />,
@@ -254,14 +274,14 @@ export default function LeadsPage() {
       field: 'temperature',
       headerName: 'Temperature',
       flex: 0.8,
-      minWidth: 110,
+      minWidth: 120,
       renderCell: (params) => <StatusBadge status={params.value} type="temperature" />,
     },
     {
       field: 'assigned_agent',
       headerName: 'Assigned Agent',
       flex: 1,
-      minWidth: 120,
+      minWidth: 130,
       renderCell: (params) => params.row?.assigned_agent?.username || 'Unassigned',
     },
     {
@@ -276,9 +296,12 @@ export default function LeadsPage() {
       headerName: 'Actions',
       sortable: false,
       filterable: false,
+      width: isManagerOrAdmin ? 170 : 100,
       minWidth: isManagerOrAdmin ? 170 : 100,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
           <Tooltip title="View Lead Details">
             <IconButton
               size="small"

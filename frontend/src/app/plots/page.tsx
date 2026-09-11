@@ -41,6 +41,12 @@ export default function PlotsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Filters
+  const [search, setSearch] = useState('');
+  const [filterProject, setFilterProject] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterType, setFilterType] = useState('');
+
   // Edit Modal
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
@@ -100,6 +106,27 @@ export default function PlotsPage() {
       maximumFractionDigits: 0,
     }).format(Number(val || 0));
   };
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setFilterProject('');
+    setFilterStatus('');
+    setFilterType('');
+  };
+
+  const filteredPlots = plots.filter((plot) => {
+    if (search) {
+      const q = search.toLowerCase();
+      const matchNum = plot.plot_number?.toLowerCase().includes(q);
+      const matchBlock = plot.block_sector?.toLowerCase().includes(q);
+      const matchProj = plot.project_name?.toLowerCase().includes(q);
+      if (!matchNum && !matchBlock && !matchProj) return false;
+    }
+    if (filterProject && String(plot.project) !== filterProject) return false;
+    if (filterStatus && plot.status !== filterStatus) return false;
+    if (filterType && plot.plot_type !== filterType) return false;
+    return true;
+  });
 
   const handleOpenView = async (plot: Plot, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -183,8 +210,27 @@ export default function PlotsPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'plot_number', headerName: 'Plot No.', width: 110 },
-    { field: 'project_name', headerName: 'Project / Society', flex: 1.2, minWidth: 150 },
+    {
+      field: 'plot_number',
+      headerName: 'Plot No.',
+      width: 110,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={700} color="primary.main">
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: 'project_name',
+      headerName: 'Project / Society',
+      flex: 1.2,
+      minWidth: 160,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={500} noWrap>
+          {params.value || 'General'}
+        </Typography>
+      ),
+    },
     { field: 'block_sector', headerName: 'Block / Phase', flex: 0.9, minWidth: 120 },
     {
       field: 'area_sqft',
@@ -221,7 +267,7 @@ export default function PlotsPage() {
       flex: 1,
       minWidth: 130,
       renderCell: (params) => (
-        <Typography variant="body2" fontWeight="bold">
+        <Typography variant="body2" fontWeight={600} color="success.dark">
           {formatCurrency(params.value)}
         </Typography>
       ),
@@ -238,9 +284,12 @@ export default function PlotsPage() {
       headerName: 'Actions',
       sortable: false,
       filterable: false,
+      width: isManagerOrAdmin ? 150 : 80,
       minWidth: isManagerOrAdmin ? 150 : 80,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
           <Tooltip title="View Plot Details">
             <IconButton
               size="small"
@@ -281,7 +330,13 @@ export default function PlotsPage() {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        spacing={2}
+        mb={3}
+      >
         <Box>
           <Typography variant="h4" fontWeight="bold">
             Plot Inventory
@@ -303,12 +358,84 @@ export default function PlotsPage() {
         )}
       </Stack>
 
+      {/* Filter / Search Bar */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+          <TextField
+            size="small"
+            label="Search Plot No. / Sector / Project"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ flex: 2, minWidth: 200 }}
+          />
+          <TextField
+            select
+            size="small"
+            label="Project"
+            value={filterProject}
+            onChange={(e) => setFilterProject(e.target.value)}
+            sx={{ flex: 1.2, minWidth: 150 }}
+          >
+            <MenuItem value="">All Projects</MenuItem>
+            {projects.map((proj) => (
+              <MenuItem key={proj.id} value={String(proj.id)}>
+                {proj.name}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="Status"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            sx={{ flex: 1, minWidth: 130 }}
+          >
+            <MenuItem value="">All Statuses</MenuItem>
+            <MenuItem value="available">Available</MenuItem>
+            <MenuItem value="reserved">Reserved</MenuItem>
+            <MenuItem value="sold">Sold</MenuItem>
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="Type"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            sx={{ flex: 1, minWidth: 130 }}
+          >
+            <MenuItem value="">All Types</MenuItem>
+            <MenuItem value="residential">Residential</MenuItem>
+            <MenuItem value="commercial">Commercial</MenuItem>
+            <MenuItem value="mixed">Mixed</MenuItem>
+          </TextField>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={handleResetFilters}
+            sx={{ minWidth: 90 }}
+          >
+            Reset
+          </Button>
+        </Stack>
+      </Paper>
+
       <DataTable
         columns={columns}
-        rows={plots}
+        rows={filteredPlots}
         loading={loading}
         onRowClick={(params) => handleOpenView(params.row)}
       />
+
 
       {/* View Plot Modal */}
       <Dialog open={viewModalOpen} onClose={() => setViewModalOpen(false)} maxWidth="sm" fullWidth>
