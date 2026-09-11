@@ -12,7 +12,6 @@ import TemperatureChart from '../../components/dashboard/TemperatureChart';
 import AgentPerformance from '../../components/dashboard/AgentPerformance';
 import ActivityFeed from '../../components/dashboard/ActivityFeed';
 import PlotSummary from '../../components/dashboard/PlotSummary';
-import LeadAgingReport from '../../components/dashboard/LeadAgingReport';
 
 export default function DashboardPage() {
   const { user, hasRole } = useAuth();
@@ -33,8 +32,7 @@ export default function DashboardPage() {
         tempRes,
         activityRes,
         agentPerfRes,
-        plotsRes,
-        agingRes
+        plotsRes
       ] = await Promise.all([
         api.get('/api/dashboard/funnel/').catch(() => ({ data: [] })),
         api.get('/api/dashboard/callbacks/').catch(() => ({ data: [] })),
@@ -43,7 +41,6 @@ export default function DashboardPage() {
         api.get('/api/dashboard/activity/').catch(() => ({ data: [] })),
         isManagerOrAdmin ? api.get('/api/dashboard/agent-performance/').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
         isManagerOrAdmin ? api.get('/api/dashboard/plots-summary/').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-        isManagerOrAdmin ? api.get('/api/dashboard/aging/').catch(() => ({ data: {} })) : Promise.resolve({ data: {} }),
       ]);
 
       setData({
@@ -54,7 +51,6 @@ export default function DashboardPage() {
         activity: activityRes.data,
         agentPerformance: agentPerfRes.data,
         plotsSummary: plotsRes.data,
-        leadAging: agingRes.data,
       });
     } catch (err: any) {
       setError('Failed to load dashboard data');
@@ -123,12 +119,9 @@ export default function DashboardPage() {
               <PlotSummary data={data?.plotsSummary || []} />
             </Grid>
 
-            {/* Row 4: Agent Performance & Aging */}
-            <Grid item xs={12} md={7}>
+            {/* Row 4: Agent Performance */}
+            <Grid item xs={12}>
               <AgentPerformance data={data?.agentPerformance || []} />
-            </Grid>
-            <Grid item xs={12} md={5}>
-              <LeadAgingReport data={data?.leadAging || {}} />
             </Grid>
           </>
         )}
