@@ -6,7 +6,6 @@ import api from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 
 import FunnelChart from '../../components/dashboard/FunnelChart';
-import CallbackWidget from '../../components/dashboard/CallbackWidget';
 import SourceBreakdown from '../../components/dashboard/SourceBreakdown';
 import TemperatureChart from '../../components/dashboard/TemperatureChart';
 import AgentPerformance from '../../components/dashboard/AgentPerformance';
@@ -27,7 +26,6 @@ export default function DashboardPage() {
     try {
       const [
         funnelRes,
-        callbacksRes,
         sourcesRes,
         tempRes,
         activityRes,
@@ -35,7 +33,6 @@ export default function DashboardPage() {
         plotsRes
       ] = await Promise.all([
         api.get('/api/dashboard/funnel/').catch(() => ({ data: [] })),
-        api.get('/api/dashboard/callbacks/').catch(() => ({ data: [] })),
         api.get('/api/dashboard/sources/').catch(() => ({ data: [] })),
         api.get('/api/dashboard/temperature/').catch(() => ({ data: [] })),
         api.get('/api/dashboard/activity/').catch(() => ({ data: [] })),
@@ -45,7 +42,6 @@ export default function DashboardPage() {
 
       setData({
         funnel: funnelRes.data,
-        callbacks: callbacksRes.data,
         sources: sourcesRes.data,
         temperature: tempRes.data,
         activity: activityRes.data,
@@ -95,12 +91,9 @@ export default function DashboardPage() {
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       <Grid container spacing={3}>
-        {/* Row 1: Pipeline Funnel & Callbacks */}
-        <Grid item xs={12} lg={8}>
+        {/* Row 1: Pipeline Funnel */}
+        <Grid item xs={12}>
           <FunnelChart data={data?.funnel || []} />
-        </Grid>
-        <Grid item xs={12} lg={4}>
-          <CallbackWidget data={data?.callbacks || []} />
         </Grid>
 
         {/* Row 2: Lead Sources & Temperature Distribution */}
