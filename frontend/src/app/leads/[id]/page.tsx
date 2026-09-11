@@ -22,6 +22,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import StraightenIcon from '@mui/icons-material/Straighten';
+import HandshakeIcon from '@mui/icons-material/Handshake';
 import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
 
@@ -46,7 +47,7 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 const TEMPERATURES = ['hot', 'warm', 'cold', 'unqualified'] as const;
 
 export default function LeadDetailPage({ params }: { params: { id: string } }) {
-  const [lead, setLead] = useState<Lead | null>(null);
+  const [lead, setLead] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [callModalOpen, setCallModalOpen] = useState(false);
@@ -121,6 +122,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   }
 
   const nextAllowed = ALLOWED_TRANSITIONS[lead.status] || [];
+  const isDealConverted = lead.status === 'booked' || lead.status === 'deal_confirmed' || Boolean(lead.linked_deal);
 
   return (
     <Box sx={{ pb: 5 }}>
@@ -137,20 +139,78 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
             Lead #{lead.id} • Added on {dayjs(lead.created_at).format('DD MMMM YYYY, hh:mm A')}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<PhoneInTalkIcon />}
-          onClick={() => setCallModalOpen(true)}
-        >
-          Log Call
-        </Button>
+        <Stack direction="row" spacing={1.5}>
+          {!isDealConverted && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<HandshakeIcon />}
+              onClick={() => router.push(`/deals/new?lead_id=${lead.id}`)}
+            >
+              Book Plot / Deal
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<PhoneInTalkIcon />}
+            onClick={() => setCallModalOpen(true)}
+          >
+            Log Call
+          </Button>
+        </Stack>
       </Stack>
 
       {feedback && (
         <Alert severity={feedback.type} sx={{ mb: 3 }} onClose={() => setFeedback(null)}>
           {feedback.message}
         </Alert>
+      )}
+
+      {/* Linked Deal Banner if Converted */}
+      {isDealConverted && (
+        <Paper
+          elevation={1}
+          sx={{
+            p: 2.5,
+            mb: 3,
+            borderRadius: 2,
+            bgcolor: lead.status === 'deal_confirmed' ? '#e8f5e9' : '#fff8e1',
+            border: `1px solid ${lead.status === 'deal_confirmed' ? '#a5d6a7' : '#ffe082'}`,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={2}>
+            <HandshakeIcon sx={{ fontSize: 40, color: lead.status === 'deal_confirmed' ? 'success.main' : 'warning.main' }} />
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {lead.status === 'deal_confirmed' ? 'Deal Confirmed & Finalized' : 'Plot Booking Reserved'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This lead is active in the Deals module and listed on the Deals & Plot Allocations page.
+              </Typography>
+            </Box>
+          </Box>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              variant="contained"
+              color={lead.status === 'deal_confirmed' ? 'success' : 'warning'}
+              onClick={() => router.push(lead.linked_deal ? `/deals/${lead.linked_deal.id}` : '/deals')}
+            >
+              View in Deals Menu {lead.linked_deal ? `(#${lead.linked_deal.id})` : ''}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => router.push('/deals')}
+            >
+              All Deals Listing
+            </Button>
+          </Stack>
+        </Paper>
       )}
 
       {/* Pipeline Status & Temperature Actions */}
@@ -167,7 +227,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
                   key={st}
                   variant="outlined"
                   size="small"
-                  color={st === 'lost' ? 'error' : 'primary'}
+                  color={st === 'lost' ? 'error' : st === 'deal_confirmed' ? 'success' : 'primary'}
                   disabled={updating}
                   onClick={() => handleStatusChange(st)}
                 >
@@ -306,7 +366,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
 
               {lead.call_attempts && lead.call_attempts.length > 0 ? (
                 <Stack spacing={2}>
-                  {lead.call_attempts.map((call) => (
+                  {lead.call_attempts.map((call: any) => (
                     <Paper
                       key={call.id}
                       variant="outlined"

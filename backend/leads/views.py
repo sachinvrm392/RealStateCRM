@@ -36,7 +36,74 @@ class LeadViewSet(viewsets.ModelViewSet):
             current_status = self.get_object().status
             if not validate_status_transition(current_status, new_status):
                 raise ValidationError({"status": f"Invalid transition from {current_status} to {new_status}"})
-        serializer.save()
+        lead = serializer.save()
+
+        if new_status in ['booked', 'deal_confirmed']:
+            from deals.models import Deal, PaymentMilestone
+            from plots.models import Plot
+            import datetime
+            deal = Deal.objects.filter(lead=lead).exclude(status='cancelled').first()
+            is_confirmed = (new_status == 'deal_confirmed')
+            if not deal:
+                plot = None
+                if lead.interested_project:
+                    plot = Plot.objects.filter(project=lead.interested_project, status='available').first()
+                if not plot:
+                    plot = Plot.objects.filter(status='available').first()
+                
+                if plot:
+                    deal_amount = plot.total_price
+                    deal = Deal.objects.create(
+                        lead=lead,
+                        plot=plot,
+                        booking_date=datetime.date.today(),
+                        deal_amount=deal_amount,
+                        discount=0,
+                        final_amount=deal_amount,
+                        status='confirmed' if is_confirmed else 'booked',
+                        notes=f"Auto-created from Lead {lead.full_name}",
+                        created_by=self.request.user if self.request.user.is_authenticated else None
+                    )
+                    plot.status = 'sold' if is_confirmed else 'reserved'
+                    plot.save()
+
+                    token_amt = round(deal_amount * 0.10)
+                    down_amt = round(deal_amount * 0.25)
+                    bal_amt = deal_amount - token_amt - down_amt
+
+                    PaymentMilestone.objects.create(
+                        deal=deal,
+                        milestone_type='token',
+                        amount=token_amt,
+                        due_date=deal.booking_date,
+                        paid_date=deal.booking_date,
+                        is_paid=True,
+                        notes='Initial Booking Token'
+                    )
+                    PaymentMilestone.objects.create(
+                        deal=deal,
+                        milestone_type='down_payment',
+                        amount=down_amt,
+                        due_date=deal.booking_date + datetime.timedelta(days=15),
+                        paid_date=deal.booking_date if is_confirmed else None,
+                        is_paid=is_confirmed,
+                        notes='Agreement Down Payment'
+                    )
+                    PaymentMilestone.objects.create(
+                        deal=deal,
+                        milestone_type='full_payment',
+                        amount=bal_amt,
+                        due_date=deal.booking_date + datetime.timedelta(days=45),
+                        paid_date=deal.booking_date if is_confirmed else None,
+                        is_paid=is_confirmed,
+                        notes='Registry Balance Clearance'
+                    )
+            else:
+                deal.status = 'confirmed' if is_confirmed else 'booked'
+                deal.save()
+                if deal.plot:
+                    deal.plot.status = 'sold' if is_confirmed else 'reserved'
+                    deal.plot.save()
 
     @action(detail=False, methods=['get'])
     def check_duplicates(self, request):

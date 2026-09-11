@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   Box,
   Card,
@@ -17,13 +17,15 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import api from '../../../lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSnackbar } from 'notistack';
 import { Lead, Plot } from '../../../types';
 import dayjs from 'dayjs';
 
-export default function NewDealPage() {
+function NewDealForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedLeadId = searchParams.get('lead_id') || searchParams.get('lead') || '';
   const { enqueueSnackbar } = useSnackbar();
 
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -31,7 +33,7 @@ export default function NewDealPage() {
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    lead: '',
+    lead: preselectedLeadId,
     plot: '',
     booking_date: dayjs().format('YYYY-MM-DD'),
     deal_amount: '',
@@ -39,6 +41,12 @@ export default function NewDealPage() {
     final_amount: '',
     notes: '',
   });
+
+  useEffect(() => {
+    if (preselectedLeadId) {
+      setFormData((prev) => ({ ...prev, lead: preselectedLeadId }));
+    }
+  }, [preselectedLeadId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,12 +57,30 @@ export default function NewDealPage() {
         ]);
         setLeads(leadsRes.data);
         setPlots(plotsRes.data);
+
+        // If preselected lead has interested project, prioritize available plots
+        if (preselectedLeadId && leadsRes.data.length > 0) {
+          const matchedLead = leadsRes.data.find((l: Lead) => String(l.id) === String(preselectedLeadId));
+          if (matchedLead && matchedLead.interested_project && plotsRes.data.length > 0) {
+            const projectPlots = plotsRes.data.filter((p: Plot) => p.project === (matchedLead.interested_project?.id || matchedLead.interested_project));
+            if (projectPlots.length > 0) {
+              const defaultPlot = projectPlots[0];
+              const price = String(defaultPlot.total_price);
+              setFormData((prev) => ({
+                ...prev,
+                plot: String(defaultPlot.id),
+                deal_amount: price,
+                final_amount: price,
+              }));
+            }
+          }
+        }
       } catch (err) {
         console.error('Failed to load leads/plots', err);
       }
     };
     fetchData();
-  }, []);
+  }, [preselectedLeadId]);
 
   const handlePlotSelect = (plotId: string) => {
     const selected = plots.find((p) => String(p.id) === String(plotId));
@@ -248,5 +274,13 @@ export default function NewDealPage() {
         </CardContent>
       </Card>
     </Box>
+  );
+}
+
+export default function NewDealPage() {
+  return (
+    <Suspense fallback={<Box p={4} textAlign="center"><CircularProgress /></Box>}>
+      <NewDealForm />
+    </Suspense>
   );
 }

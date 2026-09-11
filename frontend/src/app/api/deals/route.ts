@@ -5,6 +5,112 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
 
+  // Auto-sync: Ensure every lead with status 'booked' or 'deal_confirmed' has a corresponding Deal in db.deals
+  const convertedLeads = db.leads.filter(
+    (l) => l.status === 'booked' || l.status === 'deal_confirmed'
+  );
+
+  for (const lead of convertedLeads) {
+    const existingDeal = db.deals.find((d) => d.lead === lead.id);
+    const isConfirmed = lead.status === 'deal_confirmed';
+
+    if (!existingDeal) {
+      // Find an available plot (prefer lead's interested project if specified)
+      let plot = db.plots.find(
+        (p) => (lead.interested_project ? p.project === lead.interested_project : true) && p.status === 'available'
+      );
+      if (!plot) {
+        plot = db.plots.find((p) => p.status === 'available') || db.plots[0];
+      }
+
+      const dealAmount = plot ? plot.total_price : 3500000;
+      const finalAmount = dealAmount;
+
+      const autoDeal = {
+        id: db.deals.length > 0 ? Math.max(...db.deals.map((d) => d.id)) + 1 : 1,
+        lead: lead.id,
+        plot: plot ? plot.id : 1,
+        booking_date: new Date().toISOString().split('T')[0],
+        deal_amount: dealAmount,
+        discount: 0,
+        final_amount: finalAmount,
+        status: (isConfirmed ? 'confirmed' : 'booked') as 'booked' | 'confirmed' | 'cancelled',
+        notes: `Converted from Lead ${lead.full_name} (${isConfirmed ? 'Deal Confirmed' : 'Booked'})`,
+        created_by: 1,
+        created_at: new Date().toISOString(),
+      };
+
+      db.deals.unshift(autoDeal);
+
+      if (plot) {
+        plot.status = isConfirmed ? 'sold' : 'reserved';
+      }
+
+      // Generate default milestones
+      const tokenAmount = Math.round(finalAmount * 0.1);
+      const downPaymentAmount = Math.round(finalAmount * 0.25);
+      const balanceAmount = finalAmount - tokenAmount - downPaymentAmount;
+
+      const m1 = {
+        id: db.milestones.length > 0 ? Math.max(...db.milestones.map((m) => m.id)) + 1 : 1,
+        deal: autoDeal.id,
+        milestone_type: 'token',
+        amount: tokenAmount,
+        due_date: autoDeal.booking_date,
+        paid_date: autoDeal.booking_date,
+        is_paid: true,
+        notes: 'Initial Booking Token',
+        created_at: new Date().toISOString(),
+      };
+      db.milestones.push(m1);
+
+      const d2 = new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0];
+      const m2 = {
+        id: db.milestones.length + 1,
+        deal: autoDeal.id,
+        milestone_type: 'down_payment',
+        amount: downPaymentAmount,
+        due_date: d2,
+        paid_date: isConfirmed ? autoDeal.booking_date : null,
+        is_paid: isConfirmed,
+        notes: 'Agreement Down Payment (25%)',
+        created_at: new Date().toISOString(),
+      };
+      db.milestones.push(m2);
+
+      const d3 = new Date(Date.now() + 45 * 86400000).toISOString().split('T')[0];
+      const m3 = {
+        id: db.milestones.length + 1,
+        deal: autoDeal.id,
+        milestone_type: 'full_payment',
+        amount: balanceAmount,
+        due_date: d3,
+        paid_date: isConfirmed ? autoDeal.booking_date : null,
+        is_paid: isConfirmed,
+        notes: 'Registry Balance Clearance',
+        created_at: new Date().toISOString(),
+      };
+      db.milestones.push(m3);
+
+      db.auditLogs.unshift({
+        id: db.auditLogs.length + 1,
+        user: 1,
+        action: 'create',
+        entity_type: 'Deal',
+        entity_id: String(autoDeal.id),
+        description: `Auto-created Deal #${autoDeal.id} for converted Lead ${lead.full_name}`,
+        created_at: new Date().toISOString(),
+      });
+    } else {
+      // Sync status if needed
+      if (isConfirmed && existingDeal.status !== 'confirmed') {
+        existingDeal.status = 'confirmed';
+        const plot = db.plots.find((p) => p.id === existingDeal.plot);
+        if (plot) plot.status = 'sold';
+      }
+    }
+  }
+
   let results = [...db.deals];
   if (status) results = results.filter((d) => d.status === status);
 
@@ -35,87 +141,110 @@ export async function POST(req: Request) {
     const lead = db.leads.find((l) => l.id === leadId);
     const plot = db.plots.find((p) => p.id === plotId);
 
-    const newDeal = {
-      id: db.deals.length > 0 ? Math.max(...db.deals.map((d) => d.id)) + 1 : 1,
-      lead: leadId,
-      plot: plotId,
-      booking_date: body.booking_date || new Date().toISOString().split('T')[0],
-      deal_amount: dealAmount,
-      discount: discount,
-      final_amount: finalAmount,
-      status: (body.status as 'booked' | 'confirmed' | 'cancelled') || 'booked',
-      notes: body.notes || '',
-      created_by: 1,
-      created_at: new Date().toISOString(),
-    };
+    // If a deal already exists for this lead and plot, update it
+    const existingIndex = db.deals.findIndex((d) => d.lead === leadId && d.plot === plotId);
 
-    db.deals.unshift(newDeal);
+    const dealStatus = (body.status as 'booked' | 'confirmed' | 'cancelled') || 'booked';
 
-    if (plot) plot.status = 'reserved';
-    if (lead) lead.status = 'booked';
+    let savedDeal;
+    if (existingIndex !== -1) {
+      savedDeal = db.deals[existingIndex];
+      savedDeal.deal_amount = dealAmount;
+      savedDeal.discount = discount;
+      savedDeal.final_amount = finalAmount;
+      savedDeal.status = dealStatus;
+      savedDeal.notes = body.notes || savedDeal.notes;
+    } else {
+      savedDeal = {
+        id: db.deals.length > 0 ? Math.max(...db.deals.map((d) => d.id)) + 1 : 1,
+        lead: leadId,
+        plot: plotId,
+        booking_date: body.booking_date || new Date().toISOString().split('T')[0],
+        deal_amount: dealAmount,
+        discount: discount,
+        final_amount: finalAmount,
+        status: dealStatus,
+        notes: body.notes || '',
+        created_by: 1,
+        created_at: new Date().toISOString(),
+      };
+      db.deals.unshift(savedDeal);
+    }
+
+    if (plot) {
+      plot.status = dealStatus === 'confirmed' ? 'sold' : 'reserved';
+    }
+
+    if (lead) {
+      lead.status = dealStatus === 'confirmed' ? 'deal_confirmed' : 'booked';
+    }
 
     const tokenAmount = Math.round(finalAmount * 0.1);
     const downPaymentAmount = Math.round(finalAmount * 0.25);
     const balanceAmount = finalAmount - tokenAmount - downPaymentAmount;
-    const baseDate = new Date(newDeal.booking_date);
+    const baseDate = new Date(savedDeal.booking_date);
 
-    const m1 = {
-      id: db.milestones.length > 0 ? Math.max(...db.milestones.map((m) => m.id)) + 1 : 1,
-      deal: newDeal.id,
-      milestone_type: 'token',
-      amount: tokenAmount,
-      due_date: newDeal.booking_date,
-      paid_date: newDeal.booking_date,
-      is_paid: true,
-      notes: 'Initial Booking Token',
-      created_at: new Date().toISOString(),
-    };
-    db.milestones.push(m1);
+    let milestones = db.milestones.filter((m) => m.deal === savedDeal.id);
+    if (milestones.length === 0) {
+      const m1 = {
+        id: db.milestones.length > 0 ? Math.max(...db.milestones.map((m) => m.id)) + 1 : 1,
+        deal: savedDeal.id,
+        milestone_type: 'token',
+        amount: tokenAmount,
+        due_date: savedDeal.booking_date,
+        paid_date: savedDeal.booking_date,
+        is_paid: true,
+        notes: 'Initial Booking Token',
+        created_at: new Date().toISOString(),
+      };
+      db.milestones.push(m1);
 
-    const d2 = new Date(baseDate.getTime() + 15 * 86400000).toISOString().split('T')[0];
-    const m2 = {
-      id: db.milestones.length + 1,
-      deal: newDeal.id,
-      milestone_type: 'down_payment',
-      amount: downPaymentAmount,
-      due_date: d2,
-      paid_date: null,
-      is_paid: false,
-      notes: 'Agreement Down Payment (25%)',
-      created_at: new Date().toISOString(),
-    };
-    db.milestones.push(m2);
+      const d2 = new Date(baseDate.getTime() + 15 * 86400000).toISOString().split('T')[0];
+      const m2 = {
+        id: db.milestones.length + 1,
+        deal: savedDeal.id,
+        milestone_type: 'down_payment',
+        amount: downPaymentAmount,
+        due_date: d2,
+        paid_date: dealStatus === 'confirmed' ? savedDeal.booking_date : null,
+        is_paid: dealStatus === 'confirmed',
+        notes: 'Agreement Down Payment (25%)',
+        created_at: new Date().toISOString(),
+      };
+      db.milestones.push(m2);
 
-    const d3 = new Date(baseDate.getTime() + 45 * 86400000).toISOString().split('T')[0];
-    const m3 = {
-      id: db.milestones.length + 1,
-      deal: newDeal.id,
-      milestone_type: 'full_payment',
-      amount: balanceAmount,
-      due_date: d3,
-      paid_date: null,
-      is_paid: false,
-      notes: 'Registry Balance Clearance',
-      created_at: new Date().toISOString(),
-    };
-    db.milestones.push(m3);
+      const d3 = new Date(baseDate.getTime() + 45 * 86400000).toISOString().split('T')[0];
+      const m3 = {
+        id: db.milestones.length + 1,
+        deal: savedDeal.id,
+        milestone_type: 'full_payment',
+        amount: balanceAmount,
+        due_date: d3,
+        paid_date: dealStatus === 'confirmed' ? savedDeal.booking_date : null,
+        is_paid: dealStatus === 'confirmed',
+        notes: 'Registry Balance Clearance',
+        created_at: new Date().toISOString(),
+      };
+      db.milestones.push(m3);
+      milestones = [m1, m2, m3];
+    }
 
     db.auditLogs.unshift({
       id: db.auditLogs.length + 1,
       user: 1,
       action: 'create',
       entity_type: 'Deal',
-      entity_id: String(newDeal.id),
-      description: `Booked Deal #${newDeal.id} for Plot ${plot ? plot.plot_number : plotId} (${lead ? lead.full_name : leadId})`,
+      entity_id: String(savedDeal.id),
+      description: `Booked Deal #${savedDeal.id} for Plot ${plot ? plot.plot_number : plotId} (${lead ? lead.full_name : leadId})`,
       created_at: new Date().toISOString(),
     });
 
     return NextResponse.json(
       {
-        ...newDeal,
-        lead_name: lead ? lead.full_name : `Lead #${newDeal.lead}`,
-        plot_number: plot ? plot.plot_number : `Plot #${newDeal.plot}`,
-        milestones: [m1, m2, m3],
+        ...savedDeal,
+        lead_name: lead ? lead.full_name : `Lead #${savedDeal.lead}`,
+        plot_number: plot ? plot.plot_number : `Plot #${savedDeal.plot}`,
+        milestones,
       },
       { status: 201 }
     );
