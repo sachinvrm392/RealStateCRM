@@ -343,6 +343,60 @@
   ],
   "auditLogs": [
     {
+      "id": 9,
+      "user": 1,
+      "action": "delete",
+      "entity_type": "Plot",
+      "entity_id": "7",
+      "description": "Deleted Plot TEMP-99",
+      "created_at": "2026-09-11T13:49:10.302Z"
+    },
+    {
+      "id": 8,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Plot",
+      "entity_id": "7",
+      "description": "Created Plot TEMP-99 (Green Valley Enclave)",
+      "created_at": "2026-09-11T13:49:07.632Z"
+    },
+    {
+      "id": 7,
+      "user": 1,
+      "action": "delete",
+      "entity_type": "Project",
+      "entity_id": "3",
+      "description": "Deleted Project Temp Project Test",
+      "created_at": "2026-09-11T13:44:07.450Z"
+    },
+    {
+      "id": 6,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Project",
+      "entity_id": "3",
+      "description": "Created Project Temp Project Test",
+      "created_at": "2026-09-11T13:44:06.774Z"
+    },
+    {
+      "id": 5,
+      "user": 1,
+      "action": "delete",
+      "entity_type": "Lead",
+      "entity_id": "7",
+      "description": "Deleted Lead Temp Delete Test",
+      "created_at": "2026-09-11T13:43:57.051Z"
+    },
+    {
+      "id": 4,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Lead",
+      "entity_id": "7",
+      "description": "Created Lead Temp Delete Test",
+      "created_at": "2026-09-11T13:43:56.149Z"
+    },
+    {
       "id": 3,
       "user": 1,
       "action": "create",

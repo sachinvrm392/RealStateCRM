@@ -142,12 +142,25 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       });
     }
 
+    // Update any provided fields
+    if (body.full_name !== undefined) lead.full_name = body.full_name;
+    if (body.phone_primary !== undefined) lead.phone_primary = body.phone_primary;
+    if (body.phone_alternate !== undefined) lead.phone_alternate = body.phone_alternate;
+    if (body.email !== undefined) lead.email = body.email;
+    if (body.whatsapp_number !== undefined) lead.whatsapp_number = body.whatsapp_number;
+    if (body.source !== undefined) lead.source = body.source;
+    if (body.city !== undefined) lead.city = body.city;
+    if (body.interested_project !== undefined) lead.interested_project = body.interested_project ? Number(body.interested_project) : null;
+    if (body.budget_range !== undefined) lead.budget_range = body.budget_range;
+    if (body.plot_size_preference !== undefined) lead.plot_size_preference = body.plot_size_preference;
+    if (body.notes !== undefined) lead.notes = body.notes;
+
     if (body.temperature) {
       lead.temperature = body.temperature;
     }
 
-    if (body.assigned_agent) {
-      lead.assigned_agent = Number(body.assigned_agent);
+    if (body.assigned_agent !== undefined) {
+      lead.assigned_agent = body.assigned_agent ? Number(body.assigned_agent) : null;
     }
 
     lead.updated_at = new Date().toISOString();
@@ -169,4 +182,32 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   } catch (err) {
     return NextResponse.json({ detail: 'Update failed' }, { status: 400 });
   }
+}
+
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  db.sync();
+  const leadId = Number(params.id);
+  const index = db.leads.findIndex((l) => l.id === leadId);
+
+  if (index === -1) {
+    return NextResponse.json({ detail: 'Lead not found' }, { status: 404 });
+  }
+
+  const removed = db.leads.splice(index, 1)[0];
+  // Remove associated calls
+  db.calls = db.calls.filter((c) => c.lead !== leadId);
+
+  db.auditLogs.unshift({
+    id: db.auditLogs.length + 1,
+    user: 1,
+    action: 'delete',
+    entity_type: 'Lead',
+    entity_id: String(leadId),
+    description: `Deleted Lead ${removed.full_name}`,
+    created_at: new Date().toISOString(),
+  });
+
+  db.saveToFile();
+
+  return NextResponse.json({ message: 'Lead deleted successfully', id: leadId });
 }

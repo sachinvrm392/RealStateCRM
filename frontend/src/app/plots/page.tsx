@@ -1,37 +1,97 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Stack, Chip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Button,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Grid,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Divider,
+  Paper,
+} from '@mui/material';
 import { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LandscapeIcon from '@mui/icons-material/Landscape';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import dayjs from 'dayjs';
+
 import DataTable from '../../components/common/DataTable';
 import StatusBadge from '../../components/common/StatusBadge';
-import { Plot } from '../../types';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { Plot, Project } from '../../types';
 import api from '../../lib/api';
 import { useRouter } from 'next/navigation';
+import { useSnackbar } from 'notistack';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function PlotsPage() {
   const [plots, setPlots] = useState<Plot[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Edit Modal
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    project: '',
+    plot_number: '',
+    block_sector: '',
+    area_sqft: '',
+    plot_type: 'residential',
+    facing: 'east',
+    price_per_sqft: '',
+    total_price: '',
+    status: 'available',
+    dimensions: '',
+    amenities: '',
+  });
+
+  // View Modal
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedPlot, setSelectedPlot] = useState<any | null>(null);
+
+  // Delete Dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [plotToDelete, setPlotToDelete] = useState<Plot | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const router = useRouter();
+  const { enqueueSnackbar } = useSnackbar();
   const { hasRole } = useAuth();
   const isManagerOrAdmin = hasRole(['super_admin', 'manager']);
 
-  useEffect(() => {
-    fetchPlots();
-  }, []);
-
-  const fetchPlots = async () => {
+  const fetchPlotsAndProjects = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/plots/');
-      setPlots(res.data);
+      const [plotRes, projRes] = await Promise.all([
+        api.get('/api/plots/'),
+        api.get('/api/projects/').catch(() => ({ data: [] })),
+      ]);
+      setPlots(plotRes.data);
+      setProjects(projRes.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load plots or projects', err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPlotsAndProjects();
+  }, []);
 
   const formatCurrency = (val: number | string) => {
     return new Intl.NumberFormat('en-IN', {
@@ -39,6 +99,87 @@ export default function PlotsPage() {
       currency: 'INR',
       maximumFractionDigits: 0,
     }).format(Number(val || 0));
+  };
+
+  const handleOpenView = async (plot: Plot, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await api.get(`/api/plots/${plot.id}/`);
+      setSelectedPlot(res.data);
+    } catch (err) {
+      setSelectedPlot(plot);
+    }
+    setViewModalOpen(true);
+  };
+
+  const handleOpenEdit = (plot: Plot, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingPlot(plot);
+    setEditForm({
+      project: String(plot.project || ''),
+      plot_number: plot.plot_number || '',
+      block_sector: plot.block_sector || '',
+      area_sqft: String(plot.area_sqft || ''),
+      plot_type: plot.plot_type || 'residential',
+      facing: plot.facing || 'east',
+      price_per_sqft: String(plot.price_per_sqft || ''),
+      total_price: String(plot.total_price || ''),
+      status: plot.status || 'available',
+      dimensions: plot.dimensions || '',
+      amenities: plot.amenities || '',
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const next = { ...editForm, [name]: value };
+    if (name === 'area_sqft' || name === 'price_per_sqft') {
+      const area = Number(name === 'area_sqft' ? value : editForm.area_sqft);
+      const rate = Number(name === 'price_per_sqft' ? value : editForm.price_per_sqft);
+      if (area > 0 && rate > 0) {
+        next.total_price = String(area * rate);
+      }
+    }
+    setEditForm(next);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlot) return;
+    setSaving(true);
+    try {
+      await api.patch(`/api/plots/${editingPlot.id}/`, editForm);
+      enqueueSnackbar(`Plot ${editForm.plot_number} updated successfully`, { variant: 'success' });
+      setEditModalOpen(false);
+      fetchPlotsAndProjects();
+    } catch (err) {
+      enqueueSnackbar('Failed to update plot details', { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenDelete = (plot: Plot, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setPlotToDelete(plot);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!plotToDelete) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/api/plots/${plotToDelete.id}/`);
+      enqueueSnackbar(`Plot ${plotToDelete.plot_number} deleted successfully`, { variant: 'success' });
+      setDeleteDialogOpen(false);
+      setPlotToDelete(null);
+      fetchPlotsAndProjects();
+    } catch (err) {
+      enqueueSnackbar('Failed to delete plot', { variant: 'error' });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const columns: GridColDef[] = [
@@ -92,6 +233,50 @@ export default function PlotsPage() {
       minWidth: 120,
       renderCell: (params) => <StatusBadge status={params.value} type="plot" />,
     },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      sortable: false,
+      filterable: false,
+      minWidth: isManagerOrAdmin ? 150 : 80,
+      renderCell: (params) => (
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Tooltip title="View Plot Details">
+            <IconButton
+              size="small"
+              color="info"
+              onClick={(e) => handleOpenView(params.row, e)}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          {isManagerOrAdmin && (
+            <>
+              <Tooltip title="Edit Plot">
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={(e) => handleOpenEdit(params.row, e)}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Delete Plot">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={(e) => handleOpenDelete(params.row, e)}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Stack>
+      ),
+    },
   ];
 
   return (
@@ -118,7 +303,284 @@ export default function PlotsPage() {
         )}
       </Stack>
 
-      <DataTable columns={columns} rows={plots} loading={loading} />
+      <DataTable
+        columns={columns}
+        rows={plots}
+        loading={loading}
+        onRowClick={(params) => handleOpenView(params.row)}
+      />
+
+      {/* View Plot Modal */}
+      <Dialog open={viewModalOpen} onClose={() => setViewModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LandscapeIcon color="primary" /> Plot #{selectedPlot?.plot_number} Details
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedPlot && (
+            <Stack spacing={2}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    PROJECT / SOCIETY
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {selectedPlot.project_name || 'General Project'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    STATUS
+                  </Typography>
+                  <StatusBadge status={selectedPlot.status} type="plot" />
+                </Grid>
+
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    BLOCK / PHASE
+                  </Typography>
+                  <Typography variant="body2">
+                    {selectedPlot.block_sector || 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    PLOT TYPE
+                  </Typography>
+                  <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                    {selectedPlot.plot_type || 'Residential'}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    AREA & DIMENSIONS
+                  </Typography>
+                  <Typography variant="body2">
+                    {Number(selectedPlot.area_sqft || 0).toLocaleString()} Sq. Ft. {selectedPlot.dimensions ? `(${selectedPlot.dimensions})` : ''}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    FACING DIRECTION
+                  </Typography>
+                  <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                    {selectedPlot.facing || 'East'}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    RATE PER SQFT
+                  </Typography>
+                  <Typography variant="body2">
+                    ₹{Number(selectedPlot.price_per_sqft || 0).toLocaleString()} / sqft
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    TOTAL ASKING PRICE
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold" color="primary">
+                    {formatCurrency(selectedPlot.total_price)}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              {selectedPlot.amenities && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                    AMENITIES & HIGHLIGHTS
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'grey.50' }}>
+                    <Typography variant="body2">{selectedPlot.amenities}</Typography>
+                  </Paper>
+                </Box>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {isManagerOrAdmin && selectedPlot && (
+            <Button
+              startIcon={<EditIcon />}
+              onClick={() => {
+                setViewModalOpen(false);
+                handleOpenEdit(selectedPlot);
+              }}
+            >
+              Edit Plot
+            </Button>
+          )}
+          <Button variant="contained" onClick={() => setViewModalOpen(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Plot Modal */}
+      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} maxWidth="md" fullWidth>
+        <form onSubmit={handleSaveEdit}>
+          <DialogTitle>Edit Plot #{editingPlot?.plot_number}</DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Project / Society"
+                  name="project"
+                  value={editForm.project}
+                  onChange={handleEditChange}
+                  required
+                >
+                  {projects.map((proj) => (
+                    <MenuItem key={proj.id} value={proj.id}>
+                      {proj.name} ({proj.location || 'General'})
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Plot / Unit Number"
+                  name="plot_number"
+                  value={editForm.plot_number}
+                  onChange={handleEditChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Block / Sector / Phase"
+                  name="block_sector"
+                  value={editForm.block_sector}
+                  onChange={handleEditChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Plot Type"
+                  name="plot_type"
+                  value={editForm.plot_type}
+                  onChange={handleEditChange}
+                >
+                  <MenuItem value="residential">Residential</MenuItem>
+                  <MenuItem value="commercial">Commercial</MenuItem>
+                  <MenuItem value="mixed">Mixed / Semi-Commercial</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Inventory Status"
+                  name="status"
+                  value={editForm.status}
+                  onChange={handleEditChange}
+                >
+                  <MenuItem value="available">Available</MenuItem>
+                  <MenuItem value="reserved">Reserved</MenuItem>
+                  <MenuItem value="sold">Sold</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Area (Sq. Ft.)"
+                  name="area_sqft"
+                  value={editForm.area_sqft}
+                  onChange={handleEditChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Rate (₹ / Sq. Ft.)"
+                  name="price_per_sqft"
+                  value={editForm.price_per_sqft}
+                  onChange={handleEditChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Total Price (₹)"
+                  name="total_price"
+                  value={editForm.total_price}
+                  onChange={handleEditChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Facing Direction"
+                  name="facing"
+                  value={editForm.facing}
+                  onChange={handleEditChange}
+                >
+                  <MenuItem value="east">East</MenuItem>
+                  <MenuItem value="west">West</MenuItem>
+                  <MenuItem value="north">North</MenuItem>
+                  <MenuItem value="south">South</MenuItem>
+                  <MenuItem value="corner">Corner Facing</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Dimensions (L x W)"
+                  name="dimensions"
+                  value={editForm.dimensions}
+                  onChange={handleEditChange}
+                  placeholder="e.g. 30 x 40"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="Nearby Amenities / Highlights"
+                  name="amenities"
+                  value={editForm.amenities}
+                  onChange={handleEditChange}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditModalOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" disabled={saving}>
+              {saving ? <CircularProgress size={24} /> : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete Plot from Inventory"
+        content={`Are you sure you want to delete Plot "${plotToDelete?.plot_number}"? This action cannot be undone.`}
+        confirmText={deleting ? 'Deleting...' : 'Delete Plot'}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setDeleteDialogOpen(false);
+          setPlotToDelete(null);
+        }}
+      />
     </Box>
   );
 }

@@ -23,14 +23,20 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import StraightenIcon from '@mui/icons-material/Straighten';
 import HandshakeIcon from '@mui/icons-material/Handshake';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
 
-import { Lead } from '../../../types';
+import { Lead, Project, User } from '../../../types';
 import api from '../../../lib/api';
 import StatusBadge from '../../../components/common/StatusBadge';
+import ConfirmDialog from '../../../components/common/ConfirmDialog';
 import CallLogForm from '../../../components/leads/CallLogForm';
-import { STATUS_LABELS } from '../../../lib/constants';
+import { STATUS_LABELS, LEAD_SOURCE_OPTIONS, LEAD_TEMPERATURE_OPTIONS, LEAD_STATUS_OPTIONS } from '../../../lib/constants';
+import { useAuth } from '../../../hooks/useAuth';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem } from '@mui/material';
 
 // Allowed pipeline transitions
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -48,12 +54,41 @@ const TEMPERATURES = ['hot', 'warm', 'cold', 'unqualified'] as const;
 
 export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const [lead, setLead] = useState<any | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [agents, setAgents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [callModalOpen, setCallModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Edit Lead Modal
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [savingLead, setSavingLead] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    phone_primary: '',
+    phone_alternate: '',
+    email: '',
+    whatsapp_number: '',
+    source: 'facebook',
+    city: '',
+    interested_project: '',
+    budget_range: '',
+    plot_size_preference: '',
+    notes: '',
+    status: 'new',
+    temperature: 'warm',
+    assigned_agent: '',
+  });
+
+  // Delete Lead Dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingLead, setDeletingLead] = useState(false);
+
   const router = useRouter();
+  const { enqueueSnackbar } = useSnackbar();
+  const { hasRole } = useAuth();
+  const isManagerOrAdmin = hasRole(['super_admin', 'manager']);
 
   const fetchLead = async () => {
     try {
@@ -67,9 +102,77 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const fetchDependencies = async () => {
+    try {
+      const [projRes, agentRes] = await Promise.all([
+        api.get('/api/projects/').catch(() => ({ data: [] })),
+        api.get('/api/users/agents/').catch(() => ({ data: [] })),
+      ]);
+      setProjects(projRes.data);
+      setAgents(agentRes.data);
+    } catch (e) {
+      console.error('Error fetching dependencies', e);
+    }
+  };
+
   useEffect(() => {
     fetchLead();
+    fetchDependencies();
   }, [params.id]);
+
+  const handleOpenEdit = () => {
+    if (!lead) return;
+    setEditForm({
+      full_name: lead.full_name || '',
+      phone_primary: lead.phone_primary || '',
+      phone_alternate: lead.phone_alternate || '',
+      email: lead.email || '',
+      whatsapp_number: lead.whatsapp_number || '',
+      source: lead.source || 'facebook',
+      city: lead.city || '',
+      interested_project: lead.interested_project ? String(lead.interested_project.id || lead.interested_project) : '',
+      budget_range: lead.budget_range || '',
+      plot_size_preference: lead.plot_size_preference || '',
+      notes: lead.notes || '',
+      status: lead.status || 'new',
+      temperature: lead.temperature || 'warm',
+      assigned_agent: lead.assigned_agent ? String(lead.assigned_agent.id || lead.assigned_agent) : '',
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingLead(true);
+    try {
+      const payload: any = { ...editForm };
+      payload.interested_project = payload.interested_project ? Number(payload.interested_project) : null;
+      payload.assigned_agent = payload.assigned_agent ? Number(payload.assigned_agent) : null;
+
+      const res = await api.patch(`/api/leads/${params.id}/`, payload);
+      setLead(res.data);
+      enqueueSnackbar('Lead details updated successfully', { variant: 'success' });
+      setEditModalOpen(false);
+    } catch (err) {
+      enqueueSnackbar('Failed to update lead', { variant: 'error' });
+    } finally {
+      setSavingLead(false);
+    }
+  };
+
+  const handleDeleteLead = async () => {
+    setDeletingLead(true);
+    try {
+      await api.delete(`/api/leads/${params.id}/`);
+      enqueueSnackbar(`Lead "${lead.full_name}" deleted successfully`, { variant: 'success' });
+      setDeleteDialogOpen(false);
+      router.push('/leads');
+    } catch (err) {
+      enqueueSnackbar('Failed to delete lead', { variant: 'error' });
+    } finally {
+      setDeletingLead(false);
+    }
+  };
 
   const handleStatusChange = async (newStatus: string) => {
     setUpdating(true);
@@ -140,6 +243,26 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.5}>
+          {isManagerOrAdmin && (
+            <>
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={handleOpenEdit}
+              >
+                Edit Lead
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Delete Lead
+              </Button>
+            </>
+          )}
+
           {!isDealConverted && (
             <Button
               variant="contained"
@@ -441,6 +564,191 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
         leadName={lead.full_name}
         onClose={() => setCallModalOpen(false)}
         onSuccess={() => fetchLead()}
+      />
+
+      {/* Edit Lead Modal */}
+      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} maxWidth="md" fullWidth>
+        <form onSubmit={handleSaveEdit}>
+          <DialogTitle>Edit Lead: {lead.full_name}</DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Full Name"
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Primary Phone"
+                  value={editForm.phone_primary}
+                  onChange={(e) => setEditForm({ ...editForm, phone_primary: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Alternate Phone"
+                  value={editForm.phone_alternate}
+                  onChange={(e) => setEditForm({ ...editForm, phone_alternate: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="WhatsApp Number"
+                  value={editForm.whatsapp_number}
+                  onChange={(e) => setEditForm({ ...editForm, whatsapp_number: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="City / Location"
+                  value={editForm.city}
+                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Lead Source"
+                  value={editForm.source}
+                  onChange={(e) => setEditForm({ ...editForm, source: e.target.value })}
+                >
+                  {LEAD_SOURCE_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Pipeline Stage Status"
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                >
+                  {LEAD_STATUS_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Temperature"
+                  value={editForm.temperature}
+                  onChange={(e) => setEditForm({ ...editForm, temperature: e.target.value })}
+                >
+                  {LEAD_TEMPERATURE_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Interested Project"
+                  value={editForm.interested_project}
+                  onChange={(e) => setEditForm({ ...editForm, interested_project: e.target.value })}
+                >
+                  <MenuItem value="">-- Select Project (Optional) --</MenuItem>
+                  {projects.map((proj) => (
+                    <MenuItem key={proj.id} value={proj.id}>
+                      {proj.name} ({proj.location || 'General'})
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Assigned Agent"
+                  value={editForm.assigned_agent}
+                  onChange={(e) => setEditForm({ ...editForm, assigned_agent: e.target.value })}
+                >
+                  <MenuItem value="">-- Unassigned / Round-Robin --</MenuItem>
+                  {agents.map((ag) => (
+                    <MenuItem key={ag.id} value={ag.id}>
+                      {ag.username} {ag.first_name ? `(${ag.first_name} ${ag.last_name})` : ''}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Budget Range"
+                  value={editForm.budget_range}
+                  onChange={(e) => setEditForm({ ...editForm, budget_range: e.target.value })}
+                  placeholder="e.g. 30L - 50L"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Plot Size Preference"
+                  value={editForm.plot_size_preference}
+                  onChange={(e) => setEditForm({ ...editForm, plot_size_preference: e.target.value })}
+                  placeholder="e.g. 1500 sqft / 30x50"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="Inquiry Notes"
+                  value={editForm.notes}
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditModalOpen(false)} disabled={savingLead}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" disabled={savingLead}>
+              {savingLead ? <CircularProgress size={24} /> : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete Lead"
+        content={`Are you sure you want to delete lead "${lead?.full_name}"? All call history and activity for this lead will also be permanently removed.`}
+        confirmText={deletingLead ? 'Deleting...' : 'Delete Lead'}
+        onConfirm={handleDeleteLead}
+        onCancel={() => setDeleteDialogOpen(false)}
       />
     </Box>
   );
