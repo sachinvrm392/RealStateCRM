@@ -22,7 +22,6 @@ import { GridColDef } from '@mui/x-data-grid';
 import TableViewIcon from '@mui/icons-material/TableView';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import AddIcon from '@mui/icons-material/Add';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
 import PhoneInTalkIcon from '@mui/icons-material/PhoneInTalk';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -423,24 +422,14 @@ export default function LeadsPage() {
           </ToggleButtonGroup>
 
           {isManagerOrAdmin && (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={handleExportCSV}
-                size="small"
-              >
-                Export CSV
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<UploadFileIcon />}
-                onClick={() => router.push('/import')}
-                size="small"
-              >
-                Import CSV
-              </Button>
-            </>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleExportCSV}
+              size="small"
+            >
+              Export CSV
+            </Button>
           )}
 
           <Button
