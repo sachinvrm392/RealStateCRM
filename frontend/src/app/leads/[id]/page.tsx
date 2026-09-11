@@ -34,6 +34,7 @@ import api from '../../../lib/api';
 import StatusBadge from '../../../components/common/StatusBadge';
 import ConfirmDialog from '../../../components/common/ConfirmDialog';
 import CallLogForm from '../../../components/leads/CallLogForm';
+import StatusChangeDialog from '../../../components/leads/StatusChangeDialog';
 import { STATUS_LABELS, LEAD_SOURCE_OPTIONS, LEAD_TEMPERATURE_OPTIONS, LEAD_STATUS_OPTIONS } from '../../../lib/constants';
 import { useAuth } from '../../../hooks/useAuth';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem } from '@mui/material';
@@ -60,6 +61,11 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const [updating, setUpdating] = useState(false);
   const [callModalOpen, setCallModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Status Change Dialog
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [targetStatus, setTargetStatus] = useState('');
+  const [savingStatus, setSavingStatus] = useState(false);
 
   // Edit Lead Modal
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -174,20 +180,36 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
-    setUpdating(true);
+  const handleOpenStatusModal = (newStatus: string) => {
+    setTargetStatus(newStatus);
+    setStatusModalOpen(true);
+  };
+
+  const handleConfirmStatusChange = async (data: { status: string; comments: string; callbackDate?: string }) => {
+    setSavingStatus(true);
     setFeedback(null);
     try {
-      const res = await api.patch(`/api/leads/${params.id}/`, { status: newStatus });
-      setLead(res.data);
-      setFeedback({ type: 'success', message: `Status updated to ${STATUS_LABELS[newStatus] || newStatus}` });
-    } catch (err: any) {
-      setFeedback({
-        type: 'error',
-        message: err?.response?.data?.status || 'Failed to update lead status',
+      const res = await api.patch(`/api/leads/${params.id}/`, {
+        status: data.status,
+        status_comments: data.comments,
+        next_callback_at: data.callbackDate || null,
       });
+      setLead(res.data);
+      setStatusModalOpen(false);
+      enqueueSnackbar(
+        `Stage moved to ${STATUS_LABELS[data.status] || data.status} & logged in Communication History`,
+        { variant: 'success' }
+      );
+      setFeedback({
+        type: 'success',
+        message: `Stage updated to ${STATUS_LABELS[data.status] || data.status}`,
+      });
+    } catch (err: any) {
+      const msg = err?.response?.data?.status || err?.response?.data?.detail || 'Failed to update lead status';
+      enqueueSnackbar(msg, { variant: 'error' });
+      setFeedback({ type: 'error', message: msg });
     } finally {
-      setUpdating(false);
+      setSavingStatus(false);
     }
   };
 
@@ -351,8 +373,8 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
                   variant="outlined"
                   size="small"
                   color={st === 'lost' ? 'error' : st === 'deal_confirmed' ? 'success' : 'primary'}
-                  disabled={updating}
-                  onClick={() => handleStatusChange(st)}
+                  disabled={updating || savingStatus}
+                  onClick={() => handleOpenStatusModal(st)}
                 >
                   Move to {STATUS_LABELS[st] || st}
                 </Button>
@@ -473,9 +495,14 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           <Card elevation={2}>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" fontWeight="bold">
-                  Call History & Communication Log
-                </Typography>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    Communication Logs & Interaction History
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Real-time trail of calls, meetings, customer interactions, and stage updates
+                  </Typography>
+                </Box>
                 <Button
                   variant="outlined"
                   size="small"
@@ -489,66 +516,95 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
 
               {lead.call_attempts && lead.call_attempts.length > 0 ? (
                 <Stack spacing={2}>
-                  {lead.call_attempts.map((call: any) => (
-                    <Paper
-                      key={call.id}
-                      variant="outlined"
-                      sx={{ p: 2, borderRadius: 2, bgcolor: 'background.default' }}
-                    >
-                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Chip
-                          label={call.outcome.replace('_', ' ').toUpperCase()}
-                          size="small"
-                          color={
-                            call.outcome === 'connected'
-                              ? 'success'
-                              : call.outcome === 'callback_scheduled'
-                              ? 'warning'
-                              : 'default'
-                          }
-                        />
-                        <Typography variant="caption" color="text.secondary">
-                          {dayjs(call.created_at).format('DD MMM YYYY, hh:mm A')}
-                        </Typography>
-                      </Box>
+                  {lead.call_attempts.map((call: any) => {
+                    const isStatusUpdate = call.outcome?.startsWith('status_');
+                    const rawStatus = isStatusUpdate ? call.outcome.replace('status_changed_', '').replace('status_', '') : '';
+                    const displayStatus = STATUS_LABELS[rawStatus] || rawStatus.replace(/_/g, ' ').toUpperCase();
 
-                      {call.notes && (
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Notes:</strong> {call.notes}
-                        </Typography>
-                      )}
+                    return (
+                      <Paper
+                        key={call.id}
+                        variant="outlined"
+                        sx={{
+                          p: 2,
+                          borderRadius: 2,
+                          bgcolor: isStatusUpdate ? '#f0f9ff' : 'background.default',
+                          borderColor: isStatusUpdate ? '#bae6fd' : '#e2e8f0',
+                        }}
+                      >
+                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} flexWrap="wrap" gap={1}>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            {isStatusUpdate ? (
+                              <Chip
+                                label={`STAGE UPDATE: ${displayStatus}`}
+                                size="small"
+                                color="primary"
+                                sx={{ fontWeight: 'bold' }}
+                              />
+                            ) : (
+                              <Chip
+                                label={`CALL: ${call.outcome.replace(/_/g, ' ').toUpperCase()}`}
+                                size="small"
+                                color={
+                                  call.outcome === 'connected'
+                                    ? 'success'
+                                    : call.outcome === 'callback_scheduled'
+                                    ? 'warning'
+                                    : 'default'
+                                }
+                              />
+                            )}
 
-                      {call.callback_scheduled_at && (
-                        <Typography variant="caption" color="warning.dark" display="block" mb={1}>
-                          ⏰ Scheduled Callback for: {dayjs(call.callback_scheduled_at).format('DD MMM YYYY, hh:mm A')}
-                        </Typography>
-                      )}
+                            {call.agent_name && (
+                              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                                • By {call.agent_name}
+                              </Typography>
+                            )}
+                          </Stack>
 
-                      {call.recording_file && (
-                        <Box sx={{ mt: 1.5, p: 1, bgcolor: 'background.paper', borderRadius: 1 }}>
-                          <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                            🎧 Call Recording Audio:
+                          <Typography variant="caption" color="text.secondary">
+                            {dayjs(call.created_at).format('DD MMM YYYY, hh:mm A')}
                           </Typography>
-                          <audio controls style={{ width: '100%', height: 36 }}>
-                            <source src={call.recording_file} />
-                            Your browser does not support the audio player.
-                          </audio>
                         </Box>
-                      )}
-                    </Paper>
-                  ))}
+
+                        {call.notes && (
+                          <Typography variant="body2" sx={{ mb: 0.5, color: 'text.primary' }}>
+                            <strong>Comments / Notes:</strong> {call.notes}
+                          </Typography>
+                        )}
+
+                        {call.callback_scheduled_at && (
+                          <Typography variant="caption" color="warning.dark" display="block" mt={0.5}>
+                            ⏰ Follow-up Callback Reminder: {dayjs(call.callback_scheduled_at).format('DD MMM YYYY, hh:mm A')}
+                          </Typography>
+                        )}
+
+                        {call.recording_file && (
+                          <Box sx={{ mt: 1.5, p: 1, bgcolor: 'background.paper', borderRadius: 1 }}>
+                            <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                              🎧 Call Recording Audio:
+                            </Typography>
+                            <audio controls style={{ width: '100%', height: 36 }}>
+                              <source src={call.recording_file} />
+                              Your browser does not support the audio player.
+                            </audio>
+                          </Box>
+                        )}
+                      </Paper>
+                    );
+                  })}
                 </Stack>
               ) : (
                 <Box py={5} textAlign="center">
                   <PhoneInTalkIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary">No call attempts logged yet.</Typography>
+                  <Typography color="text.secondary">No communication logs recorded yet.</Typography>
                   <Button
                     variant="contained"
                     size="small"
                     sx={{ mt: 2 }}
                     onClick={() => setCallModalOpen(true)}
                   >
-                    Make & Log First Call
+                    Log First Interaction
                   </Button>
                 </Box>
               )}
@@ -750,6 +806,21 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
         onConfirm={handleDeleteLead}
         onCancel={() => setDeleteDialogOpen(false)}
       />
+
+      {/* Status Change & Communication Log Dialog */}
+      <StatusChangeDialog
+        open={statusModalOpen}
+        leadName={lead.full_name}
+        currentStatus={lead.status}
+        newStatus={targetStatus}
+        loading={savingStatus}
+        onClose={() => {
+          setStatusModalOpen(false);
+          setTargetStatus('');
+        }}
+        onConfirm={handleConfirmStatusChange}
+      />
     </Box>
   );
 }
+

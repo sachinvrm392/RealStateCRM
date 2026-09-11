@@ -37,11 +37,12 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import LeadFilters from '../../components/leads/LeadFilters';
 import LeadKanban from '../../components/leads/LeadKanban';
 import CallLogForm from '../../components/leads/CallLogForm';
+import StatusChangeDialog from '../../components/leads/StatusChangeDialog';
 import { Lead, Project, User } from '../../types';
 import api from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { useSnackbar } from 'notistack';
-import { LEAD_SOURCE_OPTIONS, LEAD_TEMPERATURE_OPTIONS, LEAD_STATUS_OPTIONS } from '../../lib/constants';
+import { LEAD_SOURCE_OPTIONS, LEAD_TEMPERATURE_OPTIONS, LEAD_STATUS_OPTIONS, STATUS_LABELS } from '../../lib/constants';
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -59,6 +60,12 @@ export default function LeadsPage() {
   // Call modal
   const [callModalOpen, setCallModalOpen] = useState(false);
   const [selectedLeadForCall, setSelectedLeadForCall] = useState<Lead | null>(null);
+
+  // Status Change Dialog (Kanban / Stage actions)
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [statusLead, setStatusLead] = useState<Lead | null>(null);
+  const [targetStatus, setTargetStatus] = useState('');
+  const [savingStatus, setSavingStatus] = useState(false);
 
   // Edit Lead Modal
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -216,6 +223,35 @@ export default function LeadsPage() {
       enqueueSnackbar('Failed to delete lead', { variant: 'error' });
     } finally {
       setDeletingLead(false);
+    }
+  };
+
+  const handleOpenStatusModal = (lead: Lead, targetSt: string) => {
+    setStatusLead(lead);
+    setTargetStatus(targetSt);
+    setStatusModalOpen(true);
+  };
+
+  const handleConfirmStatusChange = async (data: { status: string; comments: string; callbackDate?: string }) => {
+    if (!statusLead) return;
+    setSavingStatus(true);
+    try {
+      await api.patch(`/api/leads/${statusLead.id}/`, {
+        status: data.status,
+        status_comments: data.comments,
+        next_callback_at: data.callbackDate || null,
+      });
+      enqueueSnackbar(
+        `Lead "${statusLead.full_name}" moved to ${STATUS_LABELS[data.status] || data.status} & logged in Communication History`,
+        { variant: 'success' }
+      );
+      setStatusModalOpen(false);
+      setStatusLead(null);
+      fetchLeads();
+    } catch (err) {
+      enqueueSnackbar('Failed to update lead status', { variant: 'error' });
+    } finally {
+      setSavingStatus(false);
     }
   };
 
@@ -445,6 +481,7 @@ export default function LeadsPage() {
           leads={filteredLeads}
           onLeadClick={(lead) => router.push(`/leads/${lead.id}`)}
           onCallClick={(lead) => openCallDialog(lead)}
+          onStatusChangeClick={(lead, newSt) => handleOpenStatusModal(lead, newSt)}
         />
       )}
 
@@ -651,6 +688,24 @@ export default function LeadsPage() {
           setLeadToDelete(null);
         }}
       />
+
+      {/* Status Change & Communication Log Dialog */}
+      {statusLead && (
+        <StatusChangeDialog
+          open={statusModalOpen}
+          leadName={statusLead.full_name}
+          currentStatus={statusLead.status}
+          newStatus={targetStatus}
+          loading={savingStatus}
+          onClose={() => {
+            setStatusModalOpen(false);
+            setStatusLead(null);
+            setTargetStatus('');
+          }}
+          onConfirm={handleConfirmStatusChange}
+        />
+      )}
     </Box>
   );
 }
+

@@ -32,11 +32,24 @@ class LeadViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         new_status = serializer.validated_data.get('status')
+        current_status = self.get_object().status
         if new_status:
-            current_status = self.get_object().status
             if not validate_status_transition(current_status, new_status):
                 raise ValidationError({"status": f"Invalid transition from {current_status} to {new_status}"})
         lead = serializer.save()
+
+        # If status changed or comments provided, create communication log record
+        status_comments = self.request.data.get('status_comments') or self.request.data.get('comments')
+        if (new_status and new_status != current_status) or status_comments:
+            comment_text = status_comments or f"Stage updated from {current_status} to {new_status or current_status}"
+            CallAttempt.objects.create(
+                lead=lead,
+                agent=self.request.user if self.request.user.is_authenticated else None,
+                outcome='connected',
+                notes=f"[STAGE: {(new_status or current_status).upper()}]: {comment_text}",
+                callback_scheduled_at=self.request.data.get('next_callback_at') if self.request.data.get('next_callback_at') else None,
+                created_at=timezone.now()
+            )
 
         if new_status in ['booked', 'deal_confirmed']:
             from deals.models import Deal, PaymentMilestone

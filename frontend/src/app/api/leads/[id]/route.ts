@@ -34,7 +34,23 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   try {
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    let authUser = db.users[0];
+    if (token.startsWith('ey.')) {
+      try {
+        const parts = token.split('.');
+        const payload = JSON.parse(atob(parts[1]));
+        const found = db.users.find((u) => u.id === payload.user_id || u.username === payload.username);
+        if (found) authUser = found;
+      } catch (e) {
+        // fallback
+      }
+    }
+
     const body = await req.json();
+    const oldStatus = lead.status;
+    const isStatusChanging = Boolean(body.status && body.status !== oldStatus);
 
     if (body.status) {
       lead.status = body.status;
@@ -66,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             final_amount: finalAmount,
             status: (isConfirmed ? 'confirmed' : 'booked') as 'booked' | 'confirmed' | 'cancelled',
             notes: `Converted from Lead ${lead.full_name}`,
-            created_by: 1,
+            created_by: authUser ? authUser.id : 1,
             created_at: new Date().toISOString(),
           };
 
@@ -130,14 +146,42 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           }
         }
       }
+    }
+
+    // Automatically create a Communication Log entry on status change or when comments are passed
+    if (isStatusChanging || body.status_comments || body.status_comment) {
+      const actorName = authUser
+        ? `${authUser.first_name || ''} ${authUser.last_name || ''}`.trim() || authUser.username
+        : 'Team Member';
+      const actorRole = authUser?.role || 'manager';
+      const commentsText =
+        body.status_comments ||
+        body.status_comment ||
+        body.comments ||
+        `Status updated from ${oldStatus.replace(/_/g, ' ')} to ${(body.status || lead.status).replace(/_/g, ' ')}`;
+
+      const statusLog = {
+        id: db.calls.length > 0 ? Math.max(...db.calls.map((c) => c.id)) + 1 : 1,
+        lead: leadId,
+        agent: authUser ? authUser.id : (lead.assigned_agent || 1),
+        agent_name: `${actorName} (${actorRole.replace('_', ' ')})`,
+        outcome: `status_${body.status || lead.status}`,
+        notes: commentsText,
+        callback_scheduled_at: body.next_callback_at || null,
+        recording_file: null,
+        created_at: new Date().toISOString(),
+      };
+
+      db.calls.unshift(statusLog);
+      lead.last_contacted_at = new Date().toISOString();
 
       db.auditLogs.unshift({
         id: db.auditLogs.length + 1,
-        user: 1,
+        user: authUser ? authUser.id : 1,
         action: 'status_change',
         entity_type: 'Lead',
         entity_id: String(lead.id),
-        description: `Lead status changed to ${body.status}`,
+        description: `Lead status changed to ${body.status || lead.status} by ${actorName}. Notes: ${commentsText}`,
         created_at: new Date().toISOString(),
       });
     }
