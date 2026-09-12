@@ -174,6 +174,52 @@ export default function PlotsPage() {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlot) return;
+
+    if (!editForm.project) {
+      enqueueSnackbar('Please select a Project / Society', { variant: 'error' });
+      return;
+    }
+    if (!editForm.plot_number?.trim()) {
+      enqueueSnackbar('Plot / Unit Number is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.block_sector?.trim()) {
+      enqueueSnackbar('Block / Sector / Phase is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.plot_type) {
+      enqueueSnackbar('Plot Type is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.area_sqft || Number(editForm.area_sqft) <= 0) {
+      enqueueSnackbar('Valid Area (Sq. Ft.) is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.price_per_sqft || Number(editForm.price_per_sqft) <= 0) {
+      enqueueSnackbar('Valid Rate (₹ / Sq. Ft.) is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.total_price || Number(editForm.total_price) <= 0) {
+      enqueueSnackbar('Valid Total Price (₹) is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.facing) {
+      enqueueSnackbar('Facing Direction is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.dimensions?.trim()) {
+      enqueueSnackbar('Dimensions (L x W) are required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.status) {
+      enqueueSnackbar('Inventory Status is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.amenities?.trim()) {
+      enqueueSnackbar('Nearby Amenities / Highlights are required', { variant: 'error' });
+      return;
+    }
+
     setSaving(true);
     try {
       await api.patch(`/api/plots/${editingPlot.id}/`, editForm);
@@ -584,6 +630,8 @@ export default function PlotsPage() {
                   name="block_sector"
                   value={editForm.block_sector}
                   onChange={handleEditChange}
+                  placeholder="e.g. Phase 2, Sector B"
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -594,6 +642,7 @@ export default function PlotsPage() {
                   name="plot_type"
                   value={editForm.plot_type}
                   onChange={handleEditChange}
+                  required
                 >
                   <MenuItem value="residential">Residential</MenuItem>
                   <MenuItem value="commercial">Commercial</MenuItem>
@@ -608,6 +657,7 @@ export default function PlotsPage() {
                   name="status"
                   value={editForm.status}
                   onChange={handleEditChange}
+                  required
                 >
                   <MenuItem value="available">Available</MenuItem>
                   <MenuItem value="reserved">Reserved</MenuItem>
@@ -623,6 +673,7 @@ export default function PlotsPage() {
                   value={editForm.area_sqft}
                   onChange={handleEditChange}
                   required
+                  placeholder="e.g. 1500"
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -633,6 +684,8 @@ export default function PlotsPage() {
                   name="price_per_sqft"
                   value={editForm.price_per_sqft}
                   onChange={handleEditChange}
+                  required
+                  placeholder="e.g. 3500"
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -644,6 +697,7 @@ export default function PlotsPage() {
                   value={editForm.total_price}
                   onChange={handleEditChange}
                   required
+                  placeholder="e.g. 5250000"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -654,6 +708,7 @@ export default function PlotsPage() {
                   name="facing"
                   value={editForm.facing}
                   onChange={handleEditChange}
+                  required
                 >
                   <MenuItem value="east">East</MenuItem>
                   <MenuItem value="west">West</MenuItem>
@@ -669,7 +724,8 @@ export default function PlotsPage() {
                   name="dimensions"
                   value={editForm.dimensions}
                   onChange={handleEditChange}
-                  placeholder="e.g. 30 x 40"
+                  placeholder="e.g. 30 x 50"
+                  required
                 />
               </Grid>
               <Grid item xs={12}>
@@ -681,6 +737,9 @@ export default function PlotsPage() {
                   name="amenities"
                   value={editForm.amenities}
                   onChange={handleEditChange}
+                  placeholder="Park-facing, 40ft wide road, near clubhouse, gated security..."
+                  required
+                  helperText="Key features and plot highlights (Mandatory)"
                 />
               </Grid>
             </Grid>

@@ -73,6 +73,52 @@ export default function NewPlotPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.project) {
+      enqueueSnackbar('Please select a Project / Society', { variant: 'error' });
+      return;
+    }
+    if (!formData.plot_number?.trim()) {
+      enqueueSnackbar('Plot / Unit Number is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.block_sector?.trim()) {
+      enqueueSnackbar('Block / Sector / Phase is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.plot_type) {
+      enqueueSnackbar('Plot Type is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.area_sqft || Number(formData.area_sqft) <= 0) {
+      enqueueSnackbar('Valid Area (Sq. Ft.) is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.price_per_sqft || Number(formData.price_per_sqft) <= 0) {
+      enqueueSnackbar('Valid Rate (₹ / Sq. Ft.) is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.total_price || Number(formData.total_price) <= 0) {
+      enqueueSnackbar('Valid Total Price (₹) is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.facing) {
+      enqueueSnackbar('Facing Direction is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.dimensions?.trim()) {
+      enqueueSnackbar('Dimensions (L x W) are required', { variant: 'error' });
+      return;
+    }
+    if (!formData.status) {
+      enqueueSnackbar('Inventory Status is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.amenities?.trim()) {
+      enqueueSnackbar('Nearby Amenities / Highlights are required', { variant: 'error' });
+      return;
+    }
+
     setLoading(true);
     try {
       await api.post('/api/plots/', formData);
@@ -101,7 +147,7 @@ export default function NewPlotPage() {
             Add Plot to Inventory
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Register new plot, land unit, or commercial space
+            Register new plot, land unit, or commercial space (All fields mandatory)
           </Typography>
         </Box>
       </Stack>
@@ -123,7 +169,9 @@ export default function NewPlotPage() {
                   onChange={handleChange}
                   required
                 >
-                  <MenuItem value="">-- Select Project --</MenuItem>
+                  <MenuItem value="" disabled>
+                    -- Select Project (Required) --
+                  </MenuItem>
                   {projects.map((proj) => (
                     <MenuItem key={proj.id} value={proj.id}>
                       {proj.name} ({proj.location || 'General'})
@@ -152,6 +200,7 @@ export default function NewPlotPage() {
                   value={formData.block_sector}
                   onChange={handleChange}
                   placeholder="e.g. Phase 2, Sector B"
+                  required
                 />
               </Grid>
 
@@ -163,6 +212,7 @@ export default function NewPlotPage() {
                   name="plot_type"
                   value={formData.plot_type}
                   onChange={handleChange}
+                  required
                 >
                   <MenuItem value="residential">Residential</MenuItem>
                   <MenuItem value="commercial">Commercial</MenuItem>
@@ -184,6 +234,7 @@ export default function NewPlotPage() {
                   value={formData.area_sqft}
                   onChange={handleChange}
                   required
+                  placeholder="e.g. 1500"
                 />
               </Grid>
 
@@ -195,6 +246,8 @@ export default function NewPlotPage() {
                   name="price_per_sqft"
                   value={formData.price_per_sqft}
                   onChange={handleChange}
+                  required
+                  placeholder="e.g. 3500"
                 />
               </Grid>
 
@@ -207,6 +260,7 @@ export default function NewPlotPage() {
                   value={formData.total_price}
                   onChange={handleChange}
                   required
+                  placeholder="e.g. 5250000"
                 />
               </Grid>
 
@@ -218,6 +272,7 @@ export default function NewPlotPage() {
                   name="facing"
                   value={formData.facing}
                   onChange={handleChange}
+                  required
                 >
                   <MenuItem value="east">East</MenuItem>
                   <MenuItem value="west">West</MenuItem>
@@ -234,7 +289,8 @@ export default function NewPlotPage() {
                   name="dimensions"
                   value={formData.dimensions}
                   onChange={handleChange}
-                  placeholder="e.g. 30 x 40"
+                  placeholder="e.g. 30 x 50"
+                  required
                 />
               </Grid>
 
@@ -246,6 +302,7 @@ export default function NewPlotPage() {
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
+                  required
                 >
                   <MenuItem value="available">Available</MenuItem>
                   <MenuItem value="reserved">Reserved</MenuItem>
@@ -262,7 +319,9 @@ export default function NewPlotPage() {
                   name="amenities"
                   value={formData.amenities}
                   onChange={handleChange}
-                  placeholder="Park-facing, 40ft road, next to clubhouse, corner plot..."
+                  placeholder="Park-facing, 40ft wide road, near clubhouse, gated security..."
+                  required
+                  helperText="Key features and plot highlights (Mandatory)"
                 />
               </Grid>
             </Grid>
