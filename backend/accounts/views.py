@@ -3,10 +3,38 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from .serializers import UserSerializer, UserCreateSerializer, UserProfileSerializer
-from .permissions import IsSuperAdmin
+from .serializers import (
+    UserSerializer, UserCreateSerializer, UserProfileSerializer,
+    AgentSerializer, AgentDetailSerializer
+)
+from .permissions import IsSuperAdmin, IsManagerOrAbove
 
 User = get_user_model()
+
+class AgentViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsManagerOrAbove]
+    queryset = User.objects.filter(role='agent').order_by('-date_joined')
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return AgentDetailSerializer
+        elif self.action == 'create':
+            return UserCreateSerializer
+        return AgentSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(role='agent')
+
+    def perform_update(self, serializer):
+        user = serializer.save()
+        new_password = self.request.data.get('password')
+        if new_password:
+            user.set_password(new_password)
+            user.save()
+
+    def perform_destroy(self, instance):
+        instance.assigned_leads.update(assigned_agent=None)
+        instance.delete()
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')

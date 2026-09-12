@@ -8,9 +8,10 @@ from .services import create_audit_log
 @receiver(pre_save, sender=Lead)
 def capture_lead_old_values(sender, instance, **kwargs):
     if instance.pk:
-        old_obj = Lead.objects.get(pk=instance.pk)
-        instance._old_status = old_obj.status
-        instance._old_agent_id = old_obj.assigned_agent_id
+        old_obj = Lead.objects.filter(pk=instance.pk).first()
+        if old_obj:
+            instance._old_status = old_obj.status
+            instance._old_agent_id = old_obj.assigned_agent_id
 
 @receiver(post_save, sender=Lead)
 def audit_lead_changes(sender, instance, created, **kwargs):

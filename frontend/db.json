@@ -43,6 +43,17 @@
       "role": "agent",
       "phone": "+91 9822233344",
       "is_active": true
+    },
+    {
+      "id": 5,
+      "username": "sumit_agent",
+      "password": "crm@123",
+      "email": "sumit@gmail.com",
+      "first_name": "Sumit",
+      "last_name": "Sukla",
+      "role": "agent",
+      "phone": "9856231245",
+      "is_active": true
     }
   ],
   "projects": [
@@ -61,9 +72,33 @@
       "description": "Eco-friendly luxury villa plots with dedicated jogging track, 24/7 security, and solar lighting.",
       "is_active": true,
       "created_at": "2026-09-11T13:24:23.744Z"
+    },
+    {
+      "id": 3,
+      "name": "KDP Grand Savana",
+      "location": "Sec 32 Noida",
+      "description": "Best in RNE",
+      "is_active": true,
+      "created_at": "2026-09-12T07:03:25.105Z"
     }
   ],
   "plots": [
+    {
+      "id": 7,
+      "project": 3,
+      "project_name": "KDP Grand Savana",
+      "plot_number": "77",
+      "block_sector": "Sec 5",
+      "area_sqft": 55555,
+      "plot_type": "commercial",
+      "facing": "east",
+      "price_per_sqft": 30000,
+      "total_price": 1666650003,
+      "status": "available",
+      "dimensions": "",
+      "amenities": "",
+      "created_at": "2026-09-12T07:08:32.774Z"
+    },
     {
       "id": 1,
       "project": 1,
@@ -91,7 +126,7 @@
       "facing": "north",
       "price_per_sqft": 2500,
       "total_price": 3750000,
-      "status": "available",
+      "status": "reserved",
       "dimensions": "30x50",
       "amenities": "Wide Road",
       "created_at": "2026-09-11T13:24:23.744Z"
@@ -162,6 +197,43 @@
     }
   ],
   "leads": [
+    {
+      "id": 8,
+      "full_name": "Swati",
+      "phone_primary": "9865321245",
+      "phone_alternate": "",
+      "email": "",
+      "whatsapp_number": "",
+      "source": "other",
+      "city": "",
+      "interested_project": 3,
+      "budget_range": "25L",
+      "plot_size_preference": "1500",
+      "notes": "",
+      "status": "new",
+      "temperature": "unqualified",
+      "assigned_agent": 3,
+      "created_at": "2026-09-12T07:31:00.618Z",
+      "updated_at": "2026-09-12T07:31:19.853Z"
+    },
+    {
+      "id": 7,
+      "full_name": "Rakesh Singh",
+      "phone_primary": "7894563221",
+      "phone_alternate": "",
+      "email": "",
+      "whatsapp_number": "",
+      "source": "referral",
+      "city": "",
+      "interested_project": null,
+      "budget_range": "",
+      "plot_size_preference": "",
+      "notes": "",
+      "status": "new",
+      "temperature": "unqualified",
+      "assigned_agent": 5,
+      "created_at": "2026-09-12T07:20:55.137Z"
+    },
     {
       "id": 6,
       "full_name": "Test Lead Dynamic",
@@ -243,11 +315,14 @@
       "phone_primary": "+91 9666554433",
       "source": "website",
       "city": "Mumbai",
-      "status": "new",
+      "status": "booked",
       "temperature": "unqualified",
       "assigned_agent": 4,
       "notes": "Inbound inquiry from website contact form.",
-      "created_at": "2026-09-10T13:24:23.744Z"
+      "created_at": "2026-09-10T13:24:23.744Z",
+      "last_contacted_at": "2026-09-11T16:07:24.503Z",
+      "updated_at": "2026-09-11T16:07:24.503Z",
+      "next_callback_at": "2026-09-18T21:35"
     },
     {
       "id": 5,
@@ -270,6 +345,81 @@
     }
   ],
   "calls": [
+    {
+      "id": 17,
+      "lead": 4,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_booked",
+      "notes": "booked",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T16:07:24.503Z"
+    },
+    {
+      "id": 16,
+      "lead": 4,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_negotiation",
+      "notes": "nogotiated",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T16:07:03.505Z"
+    },
+    {
+      "id": 15,
+      "lead": 4,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_site_visit_done",
+      "notes": "done",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T16:06:27.076Z"
+    },
+    {
+      "id": 14,
+      "lead": 4,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_site_visit_scheduled",
+      "notes": "visted sited",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T16:05:42.822Z"
+    },
+    {
+      "id": 13,
+      "lead": 4,
+      "agent": 3,
+      "agent_name": "agent_rahul",
+      "outcome": "callback_scheduled",
+      "notes": "dsfasdfa",
+      "callback_scheduled_at": "2026-09-18T21:35",
+      "created_at": "2026-09-11T16:05:25.706Z"
+    },
+    {
+      "id": 12,
+      "lead": 4,
+      "agent": 2,
+      "agent_name": "Sales Manager (manager)",
+      "outcome": "status_interested",
+      "notes": "interested",
+      "callback_scheduled_at": null,
+      "recording_file": null,
+      "created_at": "2026-09-11T16:04:22.640Z"
+    },
+    {
+      "id": 11,
+      "lead": 4,
+      "agent": 3,
+      "agent_name": "agent_rahul",
+      "outcome": "connected",
+      "notes": "dsfasdfa",
+      "callback_scheduled_at": null,
+      "created_at": "2026-09-11T16:03:48.413Z"
+    },
     {
       "id": 10,
       "lead": 3,
@@ -375,6 +525,19 @@
   ],
   "deals": [
     {
+      "id": 3,
+      "lead": 4,
+      "plot": 2,
+      "booking_date": "2026-09-11",
+      "deal_amount": 3750000,
+      "discount": 0,
+      "final_amount": 3750000,
+      "status": "booked",
+      "notes": "Converted from Lead Vikas Khanna",
+      "created_by": 2,
+      "created_at": "2026-09-11T16:07:24.503Z"
+    },
+    {
       "id": 2,
       "lead": 5,
       "plot": 1,
@@ -465,9 +628,150 @@
       "is_paid": false,
       "notes": "Registry Balance Clearance",
       "created_at": "2026-09-11T15:11:35.178Z"
+    },
+    {
+      "id": 7,
+      "deal": 3,
+      "milestone_type": "token",
+      "amount": 375000,
+      "due_date": "2026-09-11",
+      "paid_date": "2026-09-11",
+      "is_paid": true,
+      "notes": "Initial Booking Token",
+      "created_at": "2026-09-11T16:07:24.503Z"
+    },
+    {
+      "id": 8,
+      "deal": 3,
+      "milestone_type": "down_payment",
+      "amount": 937500,
+      "due_date": "2026-09-26",
+      "paid_date": null,
+      "is_paid": false,
+      "notes": "Agreement Down Payment (25%)",
+      "created_at": "2026-09-11T16:07:24.503Z"
+    },
+    {
+      "id": 9,
+      "deal": 3,
+      "milestone_type": "full_payment",
+      "amount": 2437500,
+      "due_date": "2026-10-26",
+      "paid_date": null,
+      "is_paid": false,
+      "notes": "Registry Balance Clearance",
+      "created_at": "2026-09-11T16:07:24.503Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": 28,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Lead",
+      "entity_id": "8",
+      "description": "Created Lead Rakesh",
+      "created_at": "2026-09-12T07:31:00.618Z"
+    },
+    {
+      "id": 27,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Lead",
+      "entity_id": "7",
+      "description": "Created Lead Rakesh Singh",
+      "created_at": "2026-09-12T07:20:55.137Z"
+    },
+    {
+      "id": 26,
+      "user": 1,
+      "action": "update",
+      "entity_type": "Plot",
+      "entity_id": "7",
+      "description": "Updated Plot 77 (status: available)",
+      "created_at": "2026-09-12T07:15:45.905Z"
+    },
+    {
+      "id": 25,
+      "user": 1,
+      "action": "update",
+      "entity_type": "Plot",
+      "entity_id": "7",
+      "description": "Updated Plot 77 (status: reserved)",
+      "created_at": "2026-09-12T07:15:37.090Z"
+    },
+    {
+      "id": 24,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Plot",
+      "entity_id": "7",
+      "description": "Created Plot 77 (KDP Grand Savana)",
+      "created_at": "2026-09-12T07:08:32.774Z"
+    },
+    {
+      "id": 23,
+      "user": 1,
+      "action": "create",
+      "entity_type": "Project",
+      "entity_id": "3",
+      "description": "Created Project KDP Grand Savana",
+      "created_at": "2026-09-12T07:03:25.105Z"
+    },
+    {
+      "id": 1789196367398,
+      "user": 1,
+      "action": "create",
+      "entity_type": "User",
+      "entity_id": "5",
+      "description": "Created Sales Agent sumit_agent (Sumit Sukla)",
+      "created_at": "2026-09-12T06:59:27.398Z"
+    },
+    {
+      "id": 21,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "4",
+      "description": "Lead status changed to booked by Sales Manager. Notes: booked",
+      "created_at": "2026-09-11T16:07:24.503Z"
+    },
+    {
+      "id": 20,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "4",
+      "description": "Lead status changed to negotiation by Sales Manager. Notes: nogotiated",
+      "created_at": "2026-09-11T16:07:03.505Z"
+    },
+    {
+      "id": 19,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "4",
+      "description": "Lead status changed to site_visit_done by Sales Manager. Notes: done",
+      "created_at": "2026-09-11T16:06:27.076Z"
+    },
+    {
+      "id": 18,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "4",
+      "description": "Lead status changed to site_visit_scheduled by Sales Manager. Notes: visted sited",
+      "created_at": "2026-09-11T16:05:42.822Z"
+    },
+    {
+      "id": 17,
+      "user": 2,
+      "action": "status_change",
+      "entity_type": "Lead",
+      "entity_id": "4",
+      "description": "Lead status changed to interested by Sales Manager. Notes: interested",
+      "created_at": "2026-09-11T16:04:22.640Z"
+    },
     {
       "id": 16,
       "user": 2,

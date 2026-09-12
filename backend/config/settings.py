@@ -65,12 +65,31 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600
-    )
-}
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600)
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'crm_database.sqlite3',
+            'OPTIONS': {
+                'timeout': 30,
+            }
+        }
+    }
+
+from django.db.backends.signals import connection_created
+
+def enable_sqlite_wal(sender, connection, **kwargs):
+    if connection.vendor == 'sqlite':
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA journal_mode=WAL;')
+        cursor.execute('PRAGMA synchronous=NORMAL;')
+        cursor.execute('PRAGMA busy_timeout=30000;')
+
+connection_created.connect(enable_sqlite_wal)
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
