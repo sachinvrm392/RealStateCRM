@@ -84,18 +84,48 @@ export default function NewLeadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.full_name?.trim()) {
+      enqueueSnackbar('Full Name is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.phone_primary?.trim()) {
+      enqueueSnackbar('Primary Phone Number is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.email?.trim()) {
+      enqueueSnackbar('Email Address is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.city?.trim()) {
+      enqueueSnackbar('City / Location is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.interested_project) {
+      enqueueSnackbar('Please select an Interested Project / Society', { variant: 'error' });
+      return;
+    }
+    if (!formData.budget_range?.trim()) {
+      enqueueSnackbar('Budget Range is required', { variant: 'error' });
+      return;
+    }
+    if (!formData.plot_size_preference?.trim()) {
+      enqueueSnackbar('Plot Size Preference is required', { variant: 'error' });
+      return;
+    }
+
     setLoading(true);
     try {
       const payload: any = { ...formData };
-      if (!payload.interested_project) delete payload.interested_project;
       if (!payload.assigned_agent) delete payload.assigned_agent;
+      payload.interested_project = Number(payload.interested_project);
 
       await api.post('/api/leads/', payload);
-      enqueueSnackbar('Lead registered successfully (Auto-assigned to agent)', { variant: 'success' });
+      enqueueSnackbar('Lead registered successfully', { variant: 'success' });
       router.push('/leads');
     } catch (err: any) {
       const errorMsg =
         err.response?.data?.phone_primary?.[0] ||
+        err.response?.data?.email?.[0] ||
         err.response?.data?.detail ||
         'Failed to create lead';
       enqueueSnackbar(errorMsg, { variant: 'error' });
@@ -186,6 +216,8 @@ export default function NewLeadPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
+                  placeholder="name@example.com"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -195,6 +227,8 @@ export default function NewLeadPage() {
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
+                  required
+                  placeholder="e.g. Noida, Delhi NCR, Pune"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -217,7 +251,7 @@ export default function NewLeadPage() {
             </Grid>
 
             <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">
-              2. Property Preferences & Pipeline
+              2. Project / Society & Property Preferences
             </Typography>
             <Grid container spacing={2.5} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
@@ -228,8 +262,12 @@ export default function NewLeadPage() {
                   name="interested_project"
                   value={formData.interested_project}
                   onChange={handleChange}
+                  required
+                  helperText="Select the project or township of interest"
                 >
-                  <MenuItem value="">-- Select Project (Optional) --</MenuItem>
+                  <MenuItem value="" disabled>
+                    -- Select Project / Society (Required) --
+                  </MenuItem>
                   {projects.map((proj) => (
                     <MenuItem key={proj.id} value={proj.id}>
                       {proj.name} ({proj.location || 'General'})
@@ -245,6 +283,7 @@ export default function NewLeadPage() {
                   name="temperature"
                   value={formData.temperature}
                   onChange={handleChange}
+                  required
                 >
                   {LEAD_TEMPERATURE_OPTIONS.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
@@ -260,6 +299,8 @@ export default function NewLeadPage() {
                   name="budget_range"
                   value={formData.budget_range}
                   onChange={handleChange}
+                  required
+                  placeholder="e.g. 30L - 50L"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -269,6 +310,8 @@ export default function NewLeadPage() {
                   name="plot_size_preference"
                   value={formData.plot_size_preference}
                   onChange={handleChange}
+                  required
+                  placeholder="e.g. 1500 sqft / 30x50"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

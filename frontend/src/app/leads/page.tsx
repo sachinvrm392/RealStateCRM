@@ -186,6 +186,36 @@ export default function LeadsPage() {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingLead) return;
+
+    if (!editForm.full_name?.trim()) {
+      enqueueSnackbar('Full Name is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.phone_primary?.trim()) {
+      enqueueSnackbar('Primary Phone Number is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.email?.trim()) {
+      enqueueSnackbar('Email Address is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.city?.trim()) {
+      enqueueSnackbar('City / Location is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.interested_project) {
+      enqueueSnackbar('Please select an Interested Project / Society', { variant: 'error' });
+      return;
+    }
+    if (!editForm.budget_range?.trim()) {
+      enqueueSnackbar('Budget Range is required', { variant: 'error' });
+      return;
+    }
+    if (!editForm.plot_size_preference?.trim()) {
+      enqueueSnackbar('Plot Size Preference is required', { variant: 'error' });
+      return;
+    }
+
     setSavingLead(true);
     try {
       const payload: any = { ...editForm };
@@ -537,6 +567,7 @@ export default function LeadsPage() {
                   type="email"
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -545,6 +576,7 @@ export default function LeadsPage() {
                   label="City / Location"
                   value={editForm.city}
                   onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -554,6 +586,7 @@ export default function LeadsPage() {
                   label="Lead Source"
                   value={editForm.source}
                   onChange={(e) => setEditForm({ ...editForm, source: e.target.value })}
+                  required
                 >
                   {LEAD_SOURCE_OPTIONS.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
@@ -569,6 +602,7 @@ export default function LeadsPage() {
                   label="Pipeline Stage Status"
                   value={editForm.status}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  required
                 >
                   {LEAD_STATUS_OPTIONS.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
@@ -584,6 +618,7 @@ export default function LeadsPage() {
                   label="Temperature"
                   value={editForm.temperature}
                   onChange={(e) => setEditForm({ ...editForm, temperature: e.target.value })}
+                  required
                 >
                   {LEAD_TEMPERATURE_OPTIONS.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
@@ -596,11 +631,14 @@ export default function LeadsPage() {
                 <TextField
                   fullWidth
                   select
-                  label="Interested Project"
+                  label="Interested Project / Society"
                   value={editForm.interested_project}
                   onChange={(e) => setEditForm({ ...editForm, interested_project: e.target.value })}
+                  required
                 >
-                  <MenuItem value="">-- Select Project (Optional) --</MenuItem>
+                  <MenuItem value="" disabled>
+                    -- Select Project / Society (Required) --
+                  </MenuItem>
                   {projects.map((proj) => (
                     <MenuItem key={proj.id} value={proj.id}>
                       {proj.name} ({proj.location || 'General'})
@@ -630,6 +668,7 @@ export default function LeadsPage() {
                   label="Budget Range"
                   value={editForm.budget_range}
                   onChange={(e) => setEditForm({ ...editForm, budget_range: e.target.value })}
+                  required
                   placeholder="e.g. 30L - 50L"
                 />
               </Grid>
@@ -639,6 +678,7 @@ export default function LeadsPage() {
                   label="Plot Size Preference"
                   value={editForm.plot_size_preference}
                   onChange={(e) => setEditForm({ ...editForm, plot_size_preference: e.target.value })}
+                  required
                   placeholder="e.g. 1500 sqft / 30x50"
                 />
               </Grid>
