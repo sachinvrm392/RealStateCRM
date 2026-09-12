@@ -118,6 +118,18 @@ export default function ProjectsPage() {
 
   const handleSaveProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.name?.trim()) {
+      enqueueSnackbar('Project / Society Name is required', { variant: 'error' });
+      return;
+    }
+    if (!form.location?.trim()) {
+      enqueueSnackbar('Location / Landmark / City is required', { variant: 'error' });
+      return;
+    }
+    if (!form.description?.trim()) {
+      enqueueSnackbar('Project Description is required', { variant: 'error' });
+      return;
+    }
     setSaving(true);
     try {
       if (editingProject) {
@@ -349,6 +361,7 @@ export default function ProjectsPage() {
               label="Project Description / Amenities"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
+              required
               placeholder="Total 150 plots, gated community with 40ft wide roads, underground electricity..."
             />
           </DialogContent>
