@@ -5,6 +5,9 @@ __pycache__/
 *.pyd
 .Python
 # db.sqlite3 committed for demo deployment
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
 media/
 *.log
 .DS_Store
